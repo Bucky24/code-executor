@@ -16,5 +16,11 @@ describe('validator', () => {
 
             expect(() => validate({ type: STRUCTURE_TYPE.VARIABLE, name: 'foo', value: { type: STRUCTURE_TYPE.NUMBER } })).toThrow("top.value: Missing the following properties: value");
         });
+
+        it('should validate strings', () => {
+            expect(() => validate({ type: STRUCTURE_TYPE.STRING, value: "hello" })).not.toThrow();
+
+            expect(() => validate({ type: STRUCTURE_TYPE.STRING })).toThrow("top: Missing the following properties: value");
+        });
     });
 });

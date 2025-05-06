@@ -1,4 +1,4 @@
-const { STRUCTURE_TYPE } = require("./types");
+const { STRUCTURE_TYPE, VALUE_TYPE } = require("./types");
 const { validate } = require("./validator");
 
 class Executor {
@@ -22,7 +22,15 @@ class Executor {
             const value = await this.executeNode(node.value);
             context.variables[node.name] = value;
         } else if (node.type === STRUCTURE_TYPE.NUMBER) {
-            return node.value;
+            return {
+                type: VALUE_TYPE.NUMBER,
+                value: node.value,
+            };
+        } else if (node.type === STRUCTURE_TYPE.STRING) {
+            return {
+                type: VALUE_TYPE.STRING,
+                value: node.value,
+            };
         } else {
             throw new Error(`Unknown node type: ${node.type}`);
         }
