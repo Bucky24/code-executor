@@ -210,7 +210,7 @@ describe('Executor', () => {
                 expect(called).toBe(true);
             });
 
-            it('should execute the else children if the condition is false', async () => {
+            it('should not execute the children if the condition is false', async () => {
                 const code = [
                     { type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.EQUAL }, children: [{ type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [] }] },
                 ];
