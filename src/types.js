@@ -5,6 +5,7 @@ const STRUCTURE_TYPE = {
     FUNCTION_CALL: "function_call",
     FUNCTION: "function",
     COMPARISON: "comparison",
+    CONDITIONAL: "conditional",
 };
 
 const COMPARISON_OPERATOR = {

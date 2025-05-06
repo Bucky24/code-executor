@@ -38,5 +38,11 @@ describe('validator', () => {
             
             expect(() => validate({ type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, operator: 'foo' })).toThrow("Invalid operator: foo");
         });
+
+        it('should validate conditionals', () => {
+            expect(() => validate({ type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, operator: COMPARISON_OPERATOR.EQUAL }, children: [{ type: STRUCTURE_TYPE.NUMBER, value: 1 }] })).not.toThrow();
+
+            expect(() => validate({ type: STRUCTURE_TYPE.CONDITIONAL })).toThrow("top: Missing the following properties: condition, children");
+        });
     });
 });

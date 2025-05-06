@@ -193,5 +193,37 @@ describe('Executor', () => {
                 expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: false });
             });
         });
+
+        describe('conditionals', () => {
+            it('should execute the children if the condition is true', async () => {
+                const code =[
+                    { type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.EQUAL }, children: [{ type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [] }] },
+                ];
+                let called = false;
+                const context = Executor.createContext({}, { foo: () => {
+                    called = true;
+                }});
+                const executor = new Executor(code, context);
+
+                await executor.execute();
+
+                expect(called).toBe(true);
+            });
+
+            it('should execute the else children if the condition is false', async () => {
+                const code = [
+                    { type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.EQUAL }, children: [{ type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [] }] },
+                ];
+                let called = false;
+                const context = Executor.createContext({}, { foo: () => {
+                    called = true;
+                }});
+                const executor = new Executor(code, context);
+
+                await executor.execute();
+
+                expect(called).toBe(false);
+            });
+        });
     });
 });

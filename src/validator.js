@@ -38,6 +38,10 @@ function validate(structure, path = ['top']) {
             if (!Object.values(COMPARISON_OPERATOR).includes(structure.operator)) {
                 throw new Error(`Invalid operator: ${structure.operator}`);
             }
+        } else if (structure.type === STRUCTURE_TYPE.CONDITIONAL) {
+            checkForKeys(structure, ['condition', 'children']);
+            validate(structure.condition, [...path, 'condition']);
+            validate(structure.children, [...path, 'children']);
         } else {
             throw new Error(`Unknown structure type: ${structure.type}`);
         }
