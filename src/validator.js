@@ -14,12 +14,13 @@ function checkForKeys(structure, keys) {
 }
 
 function validate(structure, path = ['top']) {
-    if (Array.isArray(structure)) {
-        for (let i=0;i<structure.length;i++) {
-            validate(structure[i], [...path, i]);
-        }
-    }
     try {
+        if (Array.isArray(structure)) {
+            for (let i=0;i<structure.length;i++) {
+                validate(structure[i], [...path, i]);
+            }
+            return;
+        }
         if (structure.type === STRUCTURE_TYPE.VARIABLE) {
             checkForKeys(structure, ['name', 'value']);
             validate(structure.value, [...path, 'value']);
@@ -27,6 +28,9 @@ function validate(structure, path = ['top']) {
             checkForKeys(structure, ['value']);
         } else if (structure.type === STRUCTURE_TYPE.STRING) {
             checkForKeys(structure, ['value']);
+        } else if (structure.type === STRUCTURE_TYPE.FUNCTION_CALL) {
+            checkForKeys(structure, ['name', 'arguments']);
+            validate(structure.arguments, [...path, 'arguments']);
         } else {
             throw new Error(`Unknown structure type: ${structure.type}`);
         }
