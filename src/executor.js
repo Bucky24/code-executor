@@ -1,4 +1,4 @@
-const { STRUCTURE_TYPE, VALUE_TYPE } = require("./types");
+const { STRUCTURE_TYPE, VALUE_TYPE, COMPARISON_OPERATOR } = require("./types");
 const { validate } = require("./validator");
 
 class Executor {
@@ -39,9 +39,11 @@ class Executor {
 
     async execute() {
         const executeCode = Array.isArray(this.code) ? this.code : [this.code];
+        let result = null;
         for (const node of executeCode) {
-            await this.executeNode(node, this.context);
+            result = await this.executeNode(node, this.context);
         }
+        return result;
     }
 
     async executeNode(node, context) {
@@ -72,6 +74,30 @@ class Executor {
             if (funcData.rawFn) {
                 await funcData.rawFn(...functionArguments);
             }
+        } else if (node.type === STRUCTURE_TYPE.COMPARISON) {
+            const left = await this.executeNode(node.left);
+            const right = await this.executeNode(node.right);
+            const operator = node.operator;
+            
+            let result = false;
+            if (operator === COMPARISON_OPERATOR.EQUAL) {
+                result = left.value === right.value;
+            } else if (operator === COMPARISON_OPERATOR.NOT_EQUAL) {
+                result = left.value !== right.value;
+            } else if (operator === COMPARISON_OPERATOR.GREATER_THAN) {
+                result = left.value > right.value;
+            } else if (operator === COMPARISON_OPERATOR.LESS_THAN) {
+                result = left.value < right.value;
+            } else if (operator === COMPARISON_OPERATOR.GREATER_THAN_OR_EQUAL) {
+                result = left.value >= right.value;
+            } else if (operator === COMPARISON_OPERATOR.LESS_THAN_OR_EQUAL) {
+                result = left.value <= right.value;
+            }
+
+            return {
+                type: VALUE_TYPE.BOOLEAN,
+                value: result,
+            };
         } else {
             throw new Error(`Unknown node type: ${node.type}`);
         }

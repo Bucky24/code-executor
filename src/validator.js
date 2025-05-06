@@ -1,4 +1,4 @@
-const { STRUCTURE_TYPE } = require("./types");
+const { STRUCTURE_TYPE, COMPARISON_OPERATOR } = require("./types");
 
 function checkForKeys(structure, keys) {
     const errors = [];
@@ -31,6 +31,13 @@ function validate(structure, path = ['top']) {
         } else if (structure.type === STRUCTURE_TYPE.FUNCTION_CALL) {
             checkForKeys(structure, ['name', 'arguments']);
             validate(structure.arguments, [...path, 'arguments']);
+        } else if (structure.type === STRUCTURE_TYPE.COMPARISON) {
+            checkForKeys(structure, ['left', 'right', 'operator']);
+            validate(structure.left, [...path, 'left']);
+            validate(structure.right, [...path, 'right']);
+            if (!Object.values(COMPARISON_OPERATOR).includes(structure.operator)) {
+                throw new Error(`Invalid operator: ${structure.operator}`);
+            }
         } else {
             throw new Error(`Unknown structure type: ${structure.type}`);
         }

@@ -1,5 +1,5 @@
 const { Executor } = require("../src/executor");
-const { STRUCTURE_TYPE, VALUE_TYPE } = require("../src/types");
+const { STRUCTURE_TYPE, VALUE_TYPE, COMPARISON_OPERATOR } = require("../src/types");
 
 describe('Executor', () => {
     describe('execute', () => {
@@ -61,6 +61,137 @@ describe('Executor', () => {
             await executor.execute();
 
             expect(args).toEqual({ type: VALUE_TYPE.NUMBER, value: 1 });
+        });
+
+        describe('comparisons', () => {
+            it('should handle equals', async () => {
+                let code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.EQUAL };
+                let executor = new Executor(code);
+
+                let result = await executor.execute();
+
+                expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: true });
+
+                code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, operator: COMPARISON_OPERATOR.EQUAL };
+                executor = new Executor(code);
+
+                result = await executor.execute();
+
+                expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: false });
+            });
+
+            it('should handle not equals', async () => {
+                let code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, operator: COMPARISON_OPERATOR.NOT_EQUAL };
+                let executor = new Executor(code);
+
+                let result = await executor.execute();
+
+                expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: true });
+
+                code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.NOT_EQUAL };
+                executor = new Executor(code);
+
+                result = await executor.execute();
+
+                expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: false });
+            });
+
+            it('should handle greater than', async () => {
+                let code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.GREATER_THAN };
+                let executor = new Executor(code);
+
+                let result = await executor.execute();
+
+                expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: true });
+
+                code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.GREATER_THAN };
+                executor = new Executor(code);
+
+                result = await executor.execute();
+
+                expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: false });
+
+
+                code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, operator: COMPARISON_OPERATOR.GREATER_THAN };
+                executor = new Executor(code);
+
+                result = await executor.execute();
+
+                expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: false });
+                
+            });
+
+            it('should handle less than', async () => {
+                let code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, operator: COMPARISON_OPERATOR.LESS_THAN };
+                let executor = new Executor(code);
+
+                let result = await executor.execute();
+
+                expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: true });
+
+                code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.LESS_THAN };
+                executor = new Executor(code);
+
+                result = await executor.execute();
+
+                expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: false });
+
+
+                code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.LESS_THAN };
+                executor = new Executor(code);
+
+                result = await executor.execute();
+
+                expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: false });
+            });
+
+            it('should handle greater than or equal', async () => {
+                let code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.GREATER_THAN_OR_EQUAL };
+                let executor = new Executor(code);
+
+                let result = await executor.execute();
+
+                expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: true });
+
+                code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.GREATER_THAN_OR_EQUAL };
+                executor = new Executor(code);
+
+                result = await executor.execute();
+
+                expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: true });
+
+
+                code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, operator: COMPARISON_OPERATOR.GREATER_THAN_OR_EQUAL };
+                executor = new Executor(code);
+
+                result = await executor.execute();
+
+                expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: false });
+            });
+
+            it('should handle less than or equal', async () => {
+                let code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, operator: COMPARISON_OPERATOR.LESS_THAN_OR_EQUAL };
+                let executor = new Executor(code);
+
+                let result = await executor.execute();
+
+                expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: true });
+
+                code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.LESS_THAN_OR_EQUAL };
+                executor = new Executor(code);
+
+                result = await executor.execute();
+
+                expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: true });
+
+
+                code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.LESS_THAN_OR_EQUAL };
+                executor = new Executor(code);
+
+                result = await executor.execute();
+
+                expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: false });
+            });
         });
     });
 });

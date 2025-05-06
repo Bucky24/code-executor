@@ -1,4 +1,4 @@
-const { STRUCTURE_TYPE } = require("../src/types");
+const { STRUCTURE_TYPE, COMPARISON_OPERATOR } = require("../src/types");
 const { validate } = require("../src/validator");
 
 describe('validator', () => {
@@ -29,6 +29,14 @@ describe('validator', () => {
             expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo' })).toThrow("top: Missing the following properties: arguments");
 
             expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION_CALL })).toThrow("top: Missing the following properties: name, arguments");
+        });
+
+        it('should validate comparisons', () => {
+            expect(() => validate({ type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, operator: COMPARISON_OPERATOR.EQUAL })).not.toThrow();
+
+            expect(() => validate({ type: STRUCTURE_TYPE.COMPARISON })).toThrow("top: Missing the following properties: left, right, operator");
+            
+            expect(() => validate({ type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, operator: 'foo' })).toThrow("Invalid operator: foo");
         });
     });
 });
