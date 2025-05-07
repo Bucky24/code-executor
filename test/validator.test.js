@@ -53,5 +53,15 @@ describe('validator', () => {
 
             expect(() => validate({ type: STRUCTURE_TYPE.CONDITIONAL })).toThrow("top: Missing the following properties: condition, children");
         });
+
+        it('should validate conditional groups', () => {
+            expect(() => validate({ type: STRUCTURE_TYPE.CONDITIONAL_GROUP, children: [{ type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(2), operator: COMPARISON_OPERATOR.EQUAL }, children: [number(1)] }] })).not.toThrow();
+
+            expect(() => validate({ type: STRUCTURE_TYPE.CONDITIONAL_GROUP })).toThrow("top: Missing the following properties: children");
+
+            expect(() => validate({ type: STRUCTURE_TYPE.CONDITIONAL_GROUP, children: [{ type: STRUCTURE_TYPE.CONDITIONAL, operator: COMPARISON_OPERATOR.EQUAL, children: [number(1)] }] })).toThrow("top.children.0: Missing the following properties: condition");
+
+            expect(() => validate({ type: STRUCTURE_TYPE.CONDITIONAL_GROUP, children: [{ type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(2), operator: COMPARISON_OPERATOR.EQUAL }, children: [number(1)] }], finally: { type: STRUCTURE_TYPE.NUMBER} })).toThrow("top.finally: Missing the following properties: value");
+        });
     });
 });

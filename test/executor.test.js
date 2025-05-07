@@ -1,5 +1,5 @@
 const { Executor } = require("../src/executor");
-const { number } = require("../src/helpers");
+const { number, callFunction, conditional, comparison } = require("../src/helpers");
 const { STRUCTURE_TYPE, VALUE_TYPE, COMPARISON_OPERATOR } = require("../src/types");
 
 describe('Executor', () => {
@@ -137,7 +137,6 @@ describe('Executor', () => {
 
                 expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: false });
 
-
                 code = { type: STRUCTURE_TYPE.COMPARISON, left: number(2), right: number(1), operator: COMPARISON_OPERATOR.LESS_THAN };
                 executor = new Executor(code);
 
@@ -224,6 +223,120 @@ describe('Executor', () => {
                 await executor.execute();
 
                 expect(called).toBe(false);
+            });
+        });
+
+        describe('conditional group', () => {
+            it('should execute the first child that matches', async () => {
+                const code = [
+                    {
+                        type: STRUCTURE_TYPE.CONDITIONAL_GROUP,
+                        children: [
+                            conditional(comparison(number(1), number(1), COMPARISON_OPERATOR.EQUAL), [callFunction('foo', [])]),
+                            conditional(comparison(number(2), number(1), COMPARISON_OPERATOR.EQUAL), [callFunction('bar', [])]),
+                        ],
+                    },
+                ];
+                let calledFoo = false;
+                let calledBar = false;
+                const context = Executor.createContext({}, {
+                    foo: () => {
+                        calledFoo = true;
+                    },
+                    bar: () => {
+                        calledBar = true;
+                    },
+                });
+                const executor = new Executor(code, context);
+
+                await executor.execute();
+
+                expect(calledFoo).toBe(true);
+                expect(calledBar).toBe(false);
+            });
+
+            it('should execute the first child that matches even if it not the first child', async () => {
+                const code = [
+                    {
+                        type: STRUCTURE_TYPE.CONDITIONAL_GROUP,
+                        children: [
+                            conditional(comparison(number(2), number(1), COMPARISON_OPERATOR.EQUAL), [callFunction('foo', [])]),
+                            conditional(comparison(number(1), number(1), COMPARISON_OPERATOR.EQUAL), [callFunction('bar', [])]),
+                        ],
+                    },
+                ];
+                let calledFoo = false;
+                let calledBar = false;
+                const context = Executor.createContext({}, {
+                    foo: () => {
+                        calledFoo = true;
+                    },
+                    bar: () => {
+                        calledBar = true;
+                    },
+                });
+                const executor = new Executor(code, context);
+
+                await executor.execute();
+
+                expect(calledFoo).toBe(false);
+                expect(calledBar).toBe(true);
+            });
+
+            it('should execute finally if any children match', async () => {
+                const code = [
+                    {
+                        type: STRUCTURE_TYPE.CONDITIONAL_GROUP,
+                        children: [
+                            conditional(comparison(number(1), number(1), COMPARISON_OPERATOR.EQUAL), [callFunction('foo', [])]),
+                        ],
+                        finally: callFunction('bar', []),
+                    },
+                ];
+                let calledFoo = false;
+                let calledBar = false;
+                const context = Executor.createContext({}, {
+                    foo: () => {
+                        calledFoo = true;
+                    },
+                    bar: () => {
+                        calledBar = true;
+                    },
+                });
+                const executor = new Executor(code, context);
+
+                await executor.execute();
+
+                expect(calledFoo).toBe(true);
+                expect(calledBar).toBe(true);
+            });
+
+            it('should execute finally if no children match', async () => {
+                const code = [
+                    {
+                        type: STRUCTURE_TYPE.CONDITIONAL_GROUP,
+                        children: [
+                            conditional(comparison(number(2), number(1), COMPARISON_OPERATOR.EQUAL), [callFunction('foo', [])]),
+                        ],
+                        finally: callFunction('bar', []),
+                    },
+                ];
+                let calledFoo = false;
+                let calledBar = false;
+                const context = Executor.createContext({}, {
+                    foo: () => {
+                        calledFoo = true;
+                    },
+                    bar: () => {
+                        calledBar = true;
+                    },
+                });
+                const executor = new Executor(code, context);
+
+                await executor.execute();
+
+                expect(calledFoo).toBe(false);
+                expect(calledBar).toBe(true);
             });
         });
     });

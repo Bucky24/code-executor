@@ -45,6 +45,12 @@ function validate(structure, path = ['top']) {
             checkForKeys(structure, ['condition', 'children']);
             validate(structure.condition, [...path, 'condition']);
             validate(structure.children, [...path, 'children']);
+        } else if (structure.type === STRUCTURE_TYPE.CONDITIONAL_GROUP) {
+            checkForKeys(structure, ['children']);
+            validate(structure.children, [...path, 'children']);
+            if (structure.finally) {
+                validate(structure.finally, [...path, 'finally']);
+            }
         } else {
             throw new Error(`Unknown structure type: ${structure.type}`);
         }

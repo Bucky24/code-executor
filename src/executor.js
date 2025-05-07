@@ -118,6 +118,26 @@ class Executor {
                 for (const child of node.children) {
                     await this.executeNode(child, childContext);
                 }
+                return {
+                    type: VALUE_TYPE.BOOLEAN,
+                    value: true,
+                };
+            }
+            return {
+                type: VALUE_TYPE.BOOLEAN,
+                value: false,
+            };
+        } else if (node.type === STRUCTURE_TYPE.CONDITIONAL_GROUP) {
+            for (const child of node.children) {
+                const result = await this.executeNode(child, context);
+                if (result.value) {
+                    // found one that matched
+                    break;
+                }
+            }
+
+            if (node.finally) {
+                await this.executeNode(node.finally, context);
             }
         } else {
             throw new Error(`Unknown node type: ${node.type}`);
