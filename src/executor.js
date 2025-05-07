@@ -47,10 +47,20 @@ class Executor {
     }
 
     async executeNode(node, context) {
-        if (node.type === STRUCTURE_TYPE.VARIABLE) {
-            const value = await this.executeNode(node.value);
-            context.variables[node.name] = value;
-            return 
+        if (node.type === STRUCTURE_TYPE.ASSIGNMENT) {
+            const value = await this.executeNode(node.right);
+            const left = await this.executeNode(node.left);
+            if (left.type === VALUE_TYPE.VARIABLE) {
+                context.variables[left.value] = value;
+            } else {
+                throw new Error(`Invalid left hand of assignment: ${left.type}`);
+            }
+            return;
+        } else if (node.type === STRUCTURE_TYPE.VARIABLE) {
+            return {
+                type: VALUE_TYPE.VARIABLE,
+                value: node.name,
+            };
         } else if (node.type === STRUCTURE_TYPE.NUMBER) {
             return {
                 type: VALUE_TYPE.NUMBER,

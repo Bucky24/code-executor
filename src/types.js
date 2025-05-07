@@ -1,4 +1,5 @@
 const STRUCTURE_TYPE = {
+    ASSIGNMENT: "assignment",
     VARIABLE: "variable",
     NUMBER: "number",
     STRING: "string",
@@ -23,6 +24,7 @@ const VALUE_TYPE = {
     FUNCTION: "function",
     NULL: "null",
     BOOLEAN: "boolean",
+    VARIABLE: "variable",
 };
 
 module.exports = {

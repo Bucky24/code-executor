@@ -5,7 +5,7 @@ const { STRUCTURE_TYPE, VALUE_TYPE, COMPARISON_OPERATOR } = require("../src/type
 describe('Executor', () => {
     describe('execute', () => {
         it('should create a variable', async () => {
-            const code = { type: STRUCTURE_TYPE.VARIABLE, name: 'foo', value: number(1) };
+            const code = { type: STRUCTURE_TYPE.ASSIGNMENT, left: { type: STRUCTURE_TYPE.VARIABLE, name: 'foo' }, right: number(1) };
             const executor = new Executor(code);
 
             await executor.execute();
@@ -14,7 +14,7 @@ describe('Executor', () => {
         });
 
         it('should handle a string correctly', async () => {
-            const code = { type: STRUCTURE_TYPE.VARIABLE, name: 'foo', value: { type: STRUCTURE_TYPE.STRING, value: "hello" } };
+            const code = { type: STRUCTURE_TYPE.ASSIGNMENT, left: { type: STRUCTURE_TYPE.VARIABLE, name: 'foo' }, right: { type: STRUCTURE_TYPE.STRING, value: "hello" } };
             const executor = new Executor(code);
 
             await executor.execute();
@@ -43,7 +43,7 @@ describe('Executor', () => {
 
         it('should fail to call a function that is not a function', async () => {
             const code = [
-                { type: STRUCTURE_TYPE.VARIABLE, name: 'foo', value: number(1) },
+                { type: STRUCTURE_TYPE.ASSIGNMENT, left: { type: STRUCTURE_TYPE.VARIABLE, name: 'foo'}, right: number(1) },
                 { type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [] },
             ];
             const executor = new Executor(code);

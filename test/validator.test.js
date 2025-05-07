@@ -11,11 +11,19 @@ describe('validator', () => {
         });
 
         it('should validate variables', () => {
-            expect(() => validate({ type: STRUCTURE_TYPE.VARIABLE, name: 'foo', value: number(1) })).not.toThrow();
+            expect(() => validate({ type: STRUCTURE_TYPE.VARIABLE, name: 'foo' })).not.toThrow();
 
-            expect(() => validate({ type: STRUCTURE_TYPE.VARIABLE, name: 'foo' })).toThrow("top: Missing the following properties: value");
+            expect(() => validate({ type: STRUCTURE_TYPE.VARIABLE })).toThrow("top: Missing the following properties: name");
+        });
 
-            expect(() => validate({ type: STRUCTURE_TYPE.VARIABLE, name: 'foo', value: { type: STRUCTURE_TYPE.NUMBER } })).toThrow("top.value: Missing the following properties: value");
+        it('should validate assignments', () => {
+            expect(() => validate({ type: STRUCTURE_TYPE.ASSIGNMENT, left: { type: STRUCTURE_TYPE.VARIABLE, name: 'foo' }, right: number(1) })).not.toThrow();
+            
+            expect(() => validate({ type: STRUCTURE_TYPE.ASSIGNMENT })).toThrow("top: Missing the following properties: left, right");
+            
+            expect(() => validate({ type: STRUCTURE_TYPE.ASSIGNMENT, left: { type: STRUCTURE_TYPE.VARIABLE  }, right: number(1) })).toThrow("top.left: Missing the following properties: name");
+
+            expect(() => validate({ type: STRUCTURE_TYPE.ASSIGNMENT, left: { type: STRUCTURE_TYPE.VARIABLE, name: 'foo'  }, right: { type: STRUCTURE_TYPE.NUMBER } })).toThrow("top.right: Missing the following properties: value");
         });
 
         it('should validate strings', () => {

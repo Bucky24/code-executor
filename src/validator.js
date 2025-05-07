@@ -21,9 +21,12 @@ function validate(structure, path = ['top']) {
             }
             return;
         }
-        if (structure.type === STRUCTURE_TYPE.VARIABLE) {
-            checkForKeys(structure, ['name', 'value']);
-            validate(structure.value, [...path, 'value']);
+        if (structure.type === STRUCTURE_TYPE.ASSIGNMENT) {
+            checkForKeys(structure, ['left', 'right']);
+            validate(structure.left, [...path, 'left']);
+            validate(structure.right, [...path, 'right']);
+        } else if (structure.type === STRUCTURE_TYPE.VARIABLE) {
+            checkForKeys(structure, ['name']);
         } else if (structure.type === STRUCTURE_TYPE.NUMBER) {
             checkForKeys(structure, ['value']);
         } else if (structure.type === STRUCTURE_TYPE.STRING) {
