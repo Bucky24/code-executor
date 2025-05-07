@@ -7,7 +7,7 @@ settings:
 importers:
 
   .:
-    dependencies:
+    devDependencies:
       jest:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@22.15.14)

@@ -1,15 +1,16 @@
 const { Executor } = require("../src/executor");
+const { number } = require("../src/helpers");
 const { STRUCTURE_TYPE, VALUE_TYPE, COMPARISON_OPERATOR } = require("../src/types");
 
 describe('Executor', () => {
     describe('execute', () => {
         it('should create a variable', async () => {
-            const code = { type: STRUCTURE_TYPE.VARIABLE, name: 'foo', value: { type: STRUCTURE_TYPE.NUMBER, value: 1 } };
+            const code = { type: STRUCTURE_TYPE.VARIABLE, name: 'foo', value: number(1) };
             const executor = new Executor(code);
 
             await executor.execute();
 
-            expect(executor.getTopLevelContext().variables).toEqual({ foo: { type: VALUE_TYPE.NUMBER, value: 1 } });
+            expect(executor.getTopLevelContext().variables).toEqual({ foo: number(1) });
         });
 
         it('should handle a string correctly', async () => {
@@ -42,7 +43,7 @@ describe('Executor', () => {
 
         it('should fail to call a function that is not a function', async () => {
             const code = [
-                { type: STRUCTURE_TYPE.VARIABLE, name: 'foo', value: { type: STRUCTURE_TYPE.NUMBER, value: 1 } },
+                { type: STRUCTURE_TYPE.VARIABLE, name: 'foo', value: number(1) },
                 { type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [] },
             ];
             const executor = new Executor(code);
@@ -51,7 +52,7 @@ describe('Executor', () => {
         });
 
         it('should pass arguments to the function', async () => {
-            const code = { type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [ { type: STRUCTURE_TYPE.NUMBER, value: 1 } ] };
+            const code = { type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [ number(1) ] };
             let args = null;
             const context = Executor.createContext({}, { foo: (arg) => {
                 args = arg;
@@ -65,14 +66,14 @@ describe('Executor', () => {
 
         describe('comparisons', () => {
             it('should handle equals', async () => {
-                let code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.EQUAL };
+                let code = { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(1), operator: COMPARISON_OPERATOR.EQUAL };
                 let executor = new Executor(code);
 
                 let result = await executor.execute();
 
                 expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: true });
 
-                code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, operator: COMPARISON_OPERATOR.EQUAL };
+                code = { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(2), operator: COMPARISON_OPERATOR.EQUAL };
                 executor = new Executor(code);
 
                 result = await executor.execute();
@@ -81,14 +82,14 @@ describe('Executor', () => {
             });
 
             it('should handle not equals', async () => {
-                let code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, operator: COMPARISON_OPERATOR.NOT_EQUAL };
+                let code = { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(2), operator: COMPARISON_OPERATOR.NOT_EQUAL };
                 let executor = new Executor(code);
 
                 let result = await executor.execute();
 
                 expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: true });
 
-                code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.NOT_EQUAL };
+                code = { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(1), operator: COMPARISON_OPERATOR.NOT_EQUAL };
                 executor = new Executor(code);
 
                 result = await executor.execute();
@@ -97,14 +98,14 @@ describe('Executor', () => {
             });
 
             it('should handle greater than', async () => {
-                let code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.GREATER_THAN };
+                let code = { type: STRUCTURE_TYPE.COMPARISON, left: number(2), right: number(1), operator: COMPARISON_OPERATOR.GREATER_THAN };
                 let executor = new Executor(code);
 
                 let result = await executor.execute();
 
                 expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: true });
 
-                code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.GREATER_THAN };
+                code = { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(1), operator: COMPARISON_OPERATOR.GREATER_THAN };
                 executor = new Executor(code);
 
                 result = await executor.execute();
@@ -112,7 +113,7 @@ describe('Executor', () => {
                 expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: false });
 
 
-                code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, operator: COMPARISON_OPERATOR.GREATER_THAN };
+                code = { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(2), operator: COMPARISON_OPERATOR.GREATER_THAN };
                 executor = new Executor(code);
 
                 result = await executor.execute();
@@ -122,14 +123,14 @@ describe('Executor', () => {
             });
 
             it('should handle less than', async () => {
-                let code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, operator: COMPARISON_OPERATOR.LESS_THAN };
+                let code = { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(2), operator: COMPARISON_OPERATOR.LESS_THAN };
                 let executor = new Executor(code);
 
                 let result = await executor.execute();
 
                 expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: true });
 
-                code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.LESS_THAN };
+                code = { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(1), operator: COMPARISON_OPERATOR.LESS_THAN };
                 executor = new Executor(code);
 
                 result = await executor.execute();
@@ -137,7 +138,7 @@ describe('Executor', () => {
                 expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: false });
 
 
-                code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.LESS_THAN };
+                code = { type: STRUCTURE_TYPE.COMPARISON, left: number(2), right: number(1), operator: COMPARISON_OPERATOR.LESS_THAN };
                 executor = new Executor(code);
 
                 result = await executor.execute();
@@ -146,14 +147,14 @@ describe('Executor', () => {
             });
 
             it('should handle greater than or equal', async () => {
-                let code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.GREATER_THAN_OR_EQUAL };
+                let code = { type: STRUCTURE_TYPE.COMPARISON, left: number(2), right: number(1), operator: COMPARISON_OPERATOR.GREATER_THAN_OR_EQUAL };
                 let executor = new Executor(code);
 
                 let result = await executor.execute();
 
                 expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: true });
 
-                code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.GREATER_THAN_OR_EQUAL };
+                code = { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(1), operator: COMPARISON_OPERATOR.GREATER_THAN_OR_EQUAL };
                 executor = new Executor(code);
 
                 result = await executor.execute();
@@ -161,7 +162,7 @@ describe('Executor', () => {
                 expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: true });
 
 
-                code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, operator: COMPARISON_OPERATOR.GREATER_THAN_OR_EQUAL };
+                code = { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(2), operator: COMPARISON_OPERATOR.GREATER_THAN_OR_EQUAL };
                 executor = new Executor(code);
 
                 result = await executor.execute();
@@ -170,14 +171,14 @@ describe('Executor', () => {
             });
 
             it('should handle less than or equal', async () => {
-                let code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, operator: COMPARISON_OPERATOR.LESS_THAN_OR_EQUAL };
+                let code = { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(2), operator: COMPARISON_OPERATOR.LESS_THAN_OR_EQUAL };
                 let executor = new Executor(code);
 
                 let result = await executor.execute();
 
                 expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: true });
 
-                code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.LESS_THAN_OR_EQUAL };
+                code = { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(1), operator: COMPARISON_OPERATOR.LESS_THAN_OR_EQUAL };
                 executor = new Executor(code);
 
                 result = await executor.execute();
@@ -185,7 +186,7 @@ describe('Executor', () => {
                 expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: true });
 
 
-                code = { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.LESS_THAN_OR_EQUAL };
+                code = { type: STRUCTURE_TYPE.COMPARISON, left: number(2), right: number(1), operator: COMPARISON_OPERATOR.LESS_THAN_OR_EQUAL };
                 executor = new Executor(code);
 
                 result = await executor.execute();
@@ -197,7 +198,7 @@ describe('Executor', () => {
         describe('conditionals', () => {
             it('should execute the children if the condition is true', async () => {
                 const code =[
-                    { type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.EQUAL }, children: [{ type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [] }] },
+                    { type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(1), operator: COMPARISON_OPERATOR.EQUAL }, children: [{ type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [] }] },
                 ];
                 let called = false;
                 const context = Executor.createContext({}, { foo: () => {
@@ -212,7 +213,7 @@ describe('Executor', () => {
 
             it('should not execute the children if the condition is false', async () => {
                 const code = [
-                    { type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, operator: COMPARISON_OPERATOR.EQUAL }, children: [{ type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [] }] },
+                    { type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(2), right: number(1), operator: COMPARISON_OPERATOR.EQUAL }, children: [{ type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [] }] },
                 ];
                 let called = false;
                 const context = Executor.createContext({}, { foo: () => {

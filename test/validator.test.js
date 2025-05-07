@@ -1,16 +1,17 @@
+const { number } = require("../src/helpers");
 const { STRUCTURE_TYPE, COMPARISON_OPERATOR } = require("../src/types");
 const { validate } = require("../src/validator");
 
 describe('validator', () => {
     describe('validate', () => {
         it('should validate numbers', () => {
-            expect(() => validate({ type: STRUCTURE_TYPE.NUMBER, value: 1 })).not.toThrow();
+            expect(() => validate(number(1))).not.toThrow();
 
             expect(() => validate({ type: STRUCTURE_TYPE.NUMBER })).toThrow("top: Missing the following properties: value");
         });
 
         it('should validate variables', () => {
-            expect(() => validate({ type: STRUCTURE_TYPE.VARIABLE, name: 'foo', value: { type: STRUCTURE_TYPE.NUMBER, value: 1 } })).not.toThrow();
+            expect(() => validate({ type: STRUCTURE_TYPE.VARIABLE, name: 'foo', value: number(1) })).not.toThrow();
 
             expect(() => validate({ type: STRUCTURE_TYPE.VARIABLE, name: 'foo' })).toThrow("top: Missing the following properties: value");
 
@@ -32,15 +33,15 @@ describe('validator', () => {
         });
 
         it('should validate comparisons', () => {
-            expect(() => validate({ type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, operator: COMPARISON_OPERATOR.EQUAL })).not.toThrow();
+            expect(() => validate({ type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(2), operator: COMPARISON_OPERATOR.EQUAL })).not.toThrow();
 
             expect(() => validate({ type: STRUCTURE_TYPE.COMPARISON })).toThrow("top: Missing the following properties: left, right, operator");
             
-            expect(() => validate({ type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, operator: 'foo' })).toThrow("Invalid operator: foo");
+            expect(() => validate({ type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(2), operator: 'foo' })).toThrow("Invalid operator: foo");
         });
 
         it('should validate conditionals', () => {
-            expect(() => validate({ type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: { type: STRUCTURE_TYPE.NUMBER, value: 1 }, right: { type: STRUCTURE_TYPE.NUMBER, value: 2 }, operator: COMPARISON_OPERATOR.EQUAL }, children: [{ type: STRUCTURE_TYPE.NUMBER, value: 1 }] })).not.toThrow();
+            expect(() => validate({ type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(2), operator: COMPARISON_OPERATOR.EQUAL }, children: [number(1)] })).not.toThrow();
 
             expect(() => validate({ type: STRUCTURE_TYPE.CONDITIONAL })).toThrow("top: Missing the following properties: condition, children");
         });
