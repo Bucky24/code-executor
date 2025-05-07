@@ -8,6 +8,7 @@ const STRUCTURE_TYPE = {
     COMPARISON: "comparison",
     CONDITIONAL: "conditional",
     CONDITIONAL_GROUP: "conditional_group",
+    FUNCTION: "function",
 };
 
 const COMPARISON_OPERATOR = {

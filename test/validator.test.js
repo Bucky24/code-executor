@@ -1,4 +1,4 @@
-const { number } = require("../src/helpers");
+const { number, variable } = require("../src/helpers");
 const { STRUCTURE_TYPE, COMPARISON_OPERATOR } = require("../src/types");
 const { validate } = require("../src/validator");
 
@@ -63,5 +63,16 @@ describe('validator', () => {
 
             expect(() => validate({ type: STRUCTURE_TYPE.CONDITIONAL_GROUP, children: [{ type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(2), operator: COMPARISON_OPERATOR.EQUAL }, children: [number(1)] }], finally: { type: STRUCTURE_TYPE.NUMBER} })).toThrow("top.finally: Missing the following properties: value");
         });
+    });
+
+    it('should validate functions', () => {
+        expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, name: 'foo', arguments: [], children: [] })).not.toThrow();
+
+        expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION })).toThrow("top: Missing the following properties: name, arguments, children");
+
+        expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, name: 'foo', arguments: [{ type: STRUCTURE_TYPE.VARIABLE}], children: [] })).toThrow("top.arguments.0: Missing the following properties: name");
+        
+        expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, name: 'foo', arguments: [variable('foo')], children: [{ type: STRUCTURE_TYPE.VARIABLE }] })).toThrow("top.children.0: Missing the following properties: name");
+
     });
 });

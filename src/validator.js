@@ -51,6 +51,10 @@ function validate(structure, path = ['top']) {
             if (structure.finally) {
                 validate(structure.finally, [...path, 'finally']);
             }
+        } else if (structure.type === STRUCTURE_TYPE.FUNCTION) {
+            checkForKeys(structure, ['name', 'arguments', 'children']);
+            validate(structure.arguments, [...path, 'arguments']);
+            validate(structure.children, [...path, 'children']);
         } else {
             throw new Error(`Unknown structure type: ${structure.type}`);
         }

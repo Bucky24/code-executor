@@ -139,7 +139,17 @@ class Executor {
             if (node.finally) {
                 await this.executeNode(node.finally, context);
             }
-        } else {
+        } else if (node.type === STRUCTURE_TYPE.FUNCTION) {
+            const functionName = node.name;
+
+            return {
+                type: VALUE_TYPE.FUNCTION,
+                name: functionName,
+                arguments: node.arguments,
+                children: node.children,
+                context,
+            };
+        } else  {
             throw new Error(`Unknown node type: ${node.type}`);
         }
 

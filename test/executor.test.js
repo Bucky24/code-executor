@@ -1,5 +1,5 @@
 const { Executor } = require("../src/executor");
-const { number, callFunction, conditional, comparison } = require("../src/helpers");
+const { number, callFunction, conditional, comparison, variable } = require("../src/helpers");
 const { STRUCTURE_TYPE, VALUE_TYPE, COMPARISON_OPERATOR } = require("../src/types");
 
 describe('Executor', () => {
@@ -340,4 +340,13 @@ describe('Executor', () => {
             });
         });
     });
+
+    it('should be able to create a function', async () => {
+        const code = { type: STRUCTURE_TYPE.ASSIGNMENT, left: variable('foo'), right: { type: STRUCTURE_TYPE.FUNCTION, name: 'foo', arguments: [], children: [] }};
+        const executor = new Executor(code);
+
+        await executor.execute();
+        
+        expect(executor.getTopLevelContext().variables).toEqual({ foo: { type: VALUE_TYPE.FUNCTION, name: 'foo', arguments: [], children: [] } });
+    })
 });

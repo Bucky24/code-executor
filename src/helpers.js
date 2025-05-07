@@ -7,6 +7,12 @@ module.exports = {
             value,
         };
     },
+    variable: (name) => {
+        return {
+            type: STRUCTURE_TYPE.VARIABLE,
+            name,
+        };
+    },
     callFunction: (name, args) => {
         return {
             type: STRUCTURE_TYPE.FUNCTION_CALL,
