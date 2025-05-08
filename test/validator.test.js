@@ -66,13 +66,15 @@ describe('validator', () => {
     });
 
     it('should validate functions', () => {
-        expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, name: 'foo', arguments: [], children: [] })).not.toThrow();
+        expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, name: 'foo', parameters: [], children: [] })).not.toThrow();
+        expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, parameters: [], children: [] })).not.toThrow();
 
-        expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION })).toThrow("top: Missing the following properties: name, arguments, children");
 
-        expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, name: 'foo', arguments: [{ type: STRUCTURE_TYPE.VARIABLE}], children: [] })).toThrow("top.arguments.0: Missing the following properties: name");
+        expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION })).toThrow("top: Missing the following properties: parameters, children");
+
+        expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, name: 'foo', parameters: [{ type: STRUCTURE_TYPE.VARIABLE}], children: [] })).toThrow("top.parameters.0: Missing the following properties: name");
         
-        expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, name: 'foo', arguments: [variable('foo')], children: [{ type: STRUCTURE_TYPE.VARIABLE }] })).toThrow("top.children.0: Missing the following properties: name");
+        expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, name: 'foo', parameters: [variable('foo')], children: [{ type: STRUCTURE_TYPE.VARIABLE }] })).toThrow("top.children.0: Missing the following properties: name");
 
     });
 });

@@ -1,16 +1,28 @@
 const { Executor } = require("../src/executor");
-const { number, callFunction, conditional, comparison, variable } = require("../src/helpers");
+const { number, callFunction, conditional, comparison, variable, createFunction, assign } = require("../src/helpers");
 const { STRUCTURE_TYPE, VALUE_TYPE, COMPARISON_OPERATOR } = require("../src/types");
 
 describe('Executor', () => {
     describe('execute', () => {
-        it('should create a variable', async () => {
+        it('should assign a variable', async () => {
             const code = { type: STRUCTURE_TYPE.ASSIGNMENT, left: { type: STRUCTURE_TYPE.VARIABLE, name: 'foo' }, right: number(1) };
             const executor = new Executor(code);
 
             await executor.execute();
 
             expect(executor.getTopLevelContext().variables).toEqual({ foo: number(1) });
+        });
+
+        it('should be able to assign a variable to another variable', async () => {
+            const code = [
+                assign('foo', number(1)),
+                assign('bar', variable('foo')),
+            ];
+            const executor = new Executor(code);
+
+            await executor.execute();
+
+            expect(executor.getTopLevelContext().variables).toEqual({ foo: number(1), bar: number(1) });
         });
 
         it('should handle a string correctly', async () => {
@@ -341,12 +353,53 @@ describe('Executor', () => {
         });
     });
 
-    it('should be able to create a function', async () => {
-        const code = { type: STRUCTURE_TYPE.ASSIGNMENT, left: variable('foo'), right: { type: STRUCTURE_TYPE.FUNCTION, name: 'foo', arguments: [], children: [] }};
+    it('should be able to assign a function', async () => {
+        const code = { type: STRUCTURE_TYPE.ASSIGNMENT, left: variable('foo'), right: { type: STRUCTURE_TYPE.FUNCTION, parameters: [], children: [] }};
         const executor = new Executor(code);
 
         await executor.execute();
         
-        expect(executor.getTopLevelContext().variables).toEqual({ foo: { type: VALUE_TYPE.FUNCTION, name: 'foo', arguments: [], children: [] } });
-    })
+        expect(executor.getTopLevelContext().variables.foo).toEqual(
+            expect.objectContaining({ type: VALUE_TYPE.FUNCTION, parameters: [], children: [] })
+        );
+    });
+
+    it('should be able to create a function', async () => {
+        const code = { type: STRUCTURE_TYPE.FUNCTION, parameters: [], children: [], name: 'foo' };
+        const executor = new Executor(code);
+
+        await executor.execute();
+        
+        expect(executor.getTopLevelContext().variables.foo).toEqual(
+            expect.objectContaining({ type: VALUE_TYPE.FUNCTION, name: 'foo', parameters: [], children: [] })
+        );
+    });
+
+    describe('internal function calls', () => {
+        it('should be able to call an internal function', async () => {
+            const code = [
+                assign('myvar', number(2)),
+                createFunction('foo', [], [assign('myvar', number(3))]),
+                callFunction('foo', []),
+            ];
+            const executor = new Executor(code);
+
+            await executor.execute();
+
+            expect(executor.getTopLevelContext().variables.myvar).toEqual(number(3));
+        });
+
+        it('should be able to handle arguments into an internal function', async () => {
+            const code = [
+                assign('myvar', number(2)),
+                createFunction('foo', [variable('arg')], [assign('myvar', variable('arg'))]),
+                callFunction('foo', [number(1)]),
+            ];
+            const executor = new Executor(code);
+
+            await executor.execute();
+
+            expect(executor.getTopLevelContext().variables.myvar).toEqual(number(1));
+        });
+    });
 });

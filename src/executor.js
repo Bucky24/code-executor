@@ -48,10 +48,21 @@ class Executor {
 
     async executeNode(node, context) {
         if (node.type === STRUCTURE_TYPE.ASSIGNMENT) {
-            const value = await this.executeNode(node.right);
-            const left = await this.executeNode(node.left);
+            let value = await this.executeNode(node.right, context);
+            const left = await this.executeNode(node.left, context);
+
+            if (value.type === VALUE_TYPE.VARIABLE) {
+                value = this.__findInContext(context, value.value);
+            }
+
             if (left.type === VALUE_TYPE.VARIABLE) {
-                context.variables[left.value] = value;
+                try {
+                    const existing = this.__findInContext(context, left.value);
+                    existing.type = value.type;
+                    existing.value = value.value;
+                } catch(e) {
+                    context.variables[left.value] = value;
+                }
             } else {
                 throw new Error(`Invalid left hand of assignment: ${left.type}`);
             }
@@ -75,18 +86,39 @@ class Executor {
             const functionName = node.name;
             const functionArguments = [];
             for (const arg of node.arguments) {
-                functionArguments.push(await this.executeNode(arg));
+                functionArguments.push(await this.executeNode(arg, context));
             }
+
             let funcData = this.__findInContext(context, functionName);
             if (funcData.type !== VALUE_TYPE.FUNCTION) {
                 throw new Error(`${functionName} is not a function`);
             }
             if (funcData.rawFn) {
                 await funcData.rawFn(...functionArguments);
+            } else {
+                const paramData = {};
+                for (let i = 0; i < funcData.parameters.length; i++) {
+                    const paramName = await this.executeNode(funcData.parameters[i], context);
+                    if (paramName.type !== VALUE_TYPE.VARIABLE) {
+                        throw new Error(`Invalid parameter name type: ${paramName.type}`);
+                    }
+                    const data = functionArguments[i];
+                    paramData[paramName.value] = data;
+                }
+
+                const childContext = {
+                    parent: context,
+                    variables: {
+                        ...paramData,
+                    },
+                };
+                for (const child of funcData.children) {
+                    await this.executeNode(child, childContext);
+                }
             }
         } else if (node.type === STRUCTURE_TYPE.COMPARISON) {
-            const left = await this.executeNode(node.left);
-            const right = await this.executeNode(node.right);
+            const left = await this.executeNode(node.left, context);
+            const right = await this.executeNode(node.right, context);
             const operator = node.operator;
             
             let result = false;
@@ -109,7 +141,7 @@ class Executor {
                 value: result,
             };
         } else if (node.type === STRUCTURE_TYPE.CONDITIONAL) {
-            const condition = await this.executeNode(node.condition);
+            const condition = await this.executeNode(node.condition, context);
             if (condition.value) {
                 const childContext = {
                     parent: context,
@@ -142,14 +174,22 @@ class Executor {
         } else if (node.type === STRUCTURE_TYPE.FUNCTION) {
             const functionName = node.name;
 
-            return {
+            const funcData = {
                 type: VALUE_TYPE.FUNCTION,
-                name: functionName,
-                arguments: node.arguments,
+                parameters: node.parameters,
                 children: node.children,
                 context,
             };
-        } else  {
+
+            if (!node.name) {
+                return funcData;
+            }
+
+            context.variables[functionName] = {
+                ...funcData,
+                name: functionName,
+            };
+        } else {
             throw new Error(`Unknown node type: ${node.type}`);
         }
 

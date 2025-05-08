@@ -1,6 +1,6 @@
 const { STRUCTURE_TYPE } = require("./types")
 
-module.exports = {
+const helpers = {
     number: (value) => {
         return {
             type: STRUCTURE_TYPE.NUMBER,
@@ -11,6 +11,13 @@ module.exports = {
         return {
             type: STRUCTURE_TYPE.VARIABLE,
             name,
+        };
+    },
+    assign: (name, value) => {
+        return {
+            type: STRUCTURE_TYPE.ASSIGNMENT,
+            left: helpers.variable(name),
+            right: value,
         };
     },
     callFunction: (name, args) => {
@@ -35,4 +42,14 @@ module.exports = {
             children,
         };
     },
+    createFunction: (name, parameters, children) => {
+        return {
+            type: STRUCTURE_TYPE.FUNCTION,
+            name,
+            parameters,
+            children,
+        };
+    },
 };
+
+module.exports = helpers;
