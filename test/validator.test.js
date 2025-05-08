@@ -69,12 +69,18 @@ describe('validator', () => {
         expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, name: 'foo', parameters: [], children: [] })).not.toThrow();
         expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, parameters: [], children: [] })).not.toThrow();
 
-
         expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION })).toThrow("top: Missing the following properties: parameters, children");
 
         expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, name: 'foo', parameters: [{ type: STRUCTURE_TYPE.VARIABLE}], children: [] })).toThrow("top.parameters.0: Missing the following properties: name");
         
         expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, name: 'foo', parameters: [variable('foo')], children: [{ type: STRUCTURE_TYPE.VARIABLE }] })).toThrow("top.children.0: Missing the following properties: name");
+    });
 
+    it('should validate blocks', () => {
+        expect(() => validate({ type: STRUCTURE_TYPE.BLOCK, children: [] })).not.toThrow();
+
+        expect(() => validate({ type: STRUCTURE_TYPE.BLOCK })).toThrow("top: Missing the following properties: children");
+
+        expect(() => validate({ type: STRUCTURE_TYPE.BLOCK, children: [{ type: STRUCTURE_TYPE.VARIABLE }] })).toThrow("top.children.0: Missing the following properties: name");
     });
 });

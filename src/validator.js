@@ -55,6 +55,9 @@ function validate(structure, path = ['top']) {
             checkForKeys(structure, ['parameters', 'children']);
             validate(structure.parameters, [...path, 'parameters']);
             validate(structure.children, [...path, 'children']);
+        } else if (structure.type === STRUCTURE_TYPE.BLOCK) {
+            checkForKeys(structure, ['children']);
+            validate(structure.children, [...path, 'children']);
         } else {
             throw new Error(`Unknown structure type: ${structure.type}`);
         }

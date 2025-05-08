@@ -189,6 +189,14 @@ class Executor {
                 ...funcData,
                 name: functionName,
             };
+        } else if (node.type === STRUCTURE_TYPE.BLOCK) {
+            const childContext = {
+                parent: context,
+                variables: {},
+            };
+            for (const child of node.children) {
+                await this.executeNode(child, childContext);
+            }
         } else {
             throw new Error(`Unknown node type: ${node.type}`);
         }

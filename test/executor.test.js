@@ -351,55 +351,67 @@ describe('Executor', () => {
                 expect(calledBar).toBe(true);
             });
         });
-    });
 
-    it('should be able to assign a function', async () => {
-        const code = { type: STRUCTURE_TYPE.ASSIGNMENT, left: variable('foo'), right: { type: STRUCTURE_TYPE.FUNCTION, parameters: [], children: [] }};
-        const executor = new Executor(code);
+        it('should be able to assign a function', async () => {
+            const code = { type: STRUCTURE_TYPE.ASSIGNMENT, left: variable('foo'), right: { type: STRUCTURE_TYPE.FUNCTION, parameters: [], children: [] }};
+            const executor = new Executor(code);
+    
+            await executor.execute();
+            
+            expect(executor.getTopLevelContext().variables.foo).toEqual(
+                expect.objectContaining({ type: VALUE_TYPE.FUNCTION, parameters: [], children: [] })
+            );
+        });
+    
+        it('should be able to create a function', async () => {
+            const code = { type: STRUCTURE_TYPE.FUNCTION, parameters: [], children: [], name: 'foo' };
+            const executor = new Executor(code);
+    
+            await executor.execute();
+            
+            expect(executor.getTopLevelContext().variables.foo).toEqual(
+                expect.objectContaining({ type: VALUE_TYPE.FUNCTION, name: 'foo', parameters: [], children: [] })
+            );
+        });
+    
+        describe('internal function calls', () => {
+            it('should be able to call an internal function', async () => {
+                const code = [
+                    assign('myvar', number(2)),
+                    createFunction('foo', [], [assign('myvar', number(3))]),
+                    callFunction('foo', []),
+                ];
+                const executor = new Executor(code);
+    
+                await executor.execute();
+    
+                expect(executor.getTopLevelContext().variables.myvar).toEqual(number(3));
+            });
+    
+            it('should be able to handle arguments into an internal function', async () => {
+                const code = [
+                    assign('myvar', number(2)),
+                    createFunction('foo', [variable('arg')], [assign('myvar', variable('arg'))]),
+                    callFunction('foo', [number(1)]),
+                ];
+                const executor = new Executor(code);
+    
+                await executor.execute();
+    
+                expect(executor.getTopLevelContext().variables.myvar).toEqual(number(1));
+            });
+        });
 
-        await executor.execute();
-        
-        expect(executor.getTopLevelContext().variables.foo).toEqual(
-            expect.objectContaining({ type: VALUE_TYPE.FUNCTION, parameters: [], children: [] })
-        );
-    });
-
-    it('should be able to create a function', async () => {
-        const code = { type: STRUCTURE_TYPE.FUNCTION, parameters: [], children: [], name: 'foo' };
-        const executor = new Executor(code);
-
-        await executor.execute();
-        
-        expect(executor.getTopLevelContext().variables.foo).toEqual(
-            expect.objectContaining({ type: VALUE_TYPE.FUNCTION, name: 'foo', parameters: [], children: [] })
-        );
-    });
-
-    describe('internal function calls', () => {
-        it('should be able to call an internal function', async () => {
+        it('should be able to execute a block', async () => {
             const code = [
                 assign('myvar', number(2)),
-                createFunction('foo', [], [assign('myvar', number(3))]),
-                callFunction('foo', []),
+                { type: STRUCTURE_TYPE.BLOCK, children: [assign('myvar', number(3)),]}
             ];
             const executor = new Executor(code);
-
+    
             await executor.execute();
 
             expect(executor.getTopLevelContext().variables.myvar).toEqual(number(3));
-        });
-
-        it('should be able to handle arguments into an internal function', async () => {
-            const code = [
-                assign('myvar', number(2)),
-                createFunction('foo', [variable('arg')], [assign('myvar', variable('arg'))]),
-                callFunction('foo', [number(1)]),
-            ];
-            const executor = new Executor(code);
-
-            await executor.execute();
-
-            expect(executor.getTopLevelContext().variables.myvar).toEqual(number(1));
         });
     });
 });

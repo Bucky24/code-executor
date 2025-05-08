@@ -9,6 +9,7 @@ const STRUCTURE_TYPE = {
     CONDITIONAL: "conditional",
     CONDITIONAL_GROUP: "conditional_group",
     FUNCTION: "function",
+    BLOCK: "block",
 };
 
 const COMPARISON_OPERATOR = {
