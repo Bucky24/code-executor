@@ -1,5 +1,5 @@
 const { number, variable } = require("../src/helpers");
-const { STRUCTURE_TYPE, COMPARISON_OPERATOR } = require("../src/types");
+const { STRUCTURE_TYPE, COMPARISON_OPERATOR, MATH_OPERATOR } = require("../src/types");
 const { validate } = require("../src/validator");
 
 describe('validator', () => {
@@ -63,24 +63,50 @@ describe('validator', () => {
 
             expect(() => validate({ type: STRUCTURE_TYPE.CONDITIONAL_GROUP, children: [{ type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(2), operator: COMPARISON_OPERATOR.EQUAL }, children: [number(1)] }], finally: { type: STRUCTURE_TYPE.NUMBER} })).toThrow("top.finally: Missing the following properties: value");
         });
-    });
 
-    it('should validate functions', () => {
-        expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, name: 'foo', parameters: [], children: [] })).not.toThrow();
-        expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, parameters: [], children: [] })).not.toThrow();
+        it('should validate functions', () => {
+            expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, name: 'foo', parameters: [], children: [] })).not.toThrow();
+            expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, parameters: [], children: [] })).not.toThrow();
 
-        expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION })).toThrow("top: Missing the following properties: parameters, children");
+            expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION })).toThrow("top: Missing the following properties: parameters, children");
 
-        expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, name: 'foo', parameters: [{ type: STRUCTURE_TYPE.VARIABLE}], children: [] })).toThrow("top.parameters.0: Missing the following properties: name");
-        
-        expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, name: 'foo', parameters: [variable('foo')], children: [{ type: STRUCTURE_TYPE.VARIABLE }] })).toThrow("top.children.0: Missing the following properties: name");
-    });
+            expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, name: 'foo', parameters: [{ type: STRUCTURE_TYPE.VARIABLE}], children: [] })).toThrow("top.parameters.0: Missing the following properties: name");
+            
+            expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION, name: 'foo', parameters: [variable('foo')], children: [{ type: STRUCTURE_TYPE.VARIABLE }] })).toThrow("top.children.0: Missing the following properties: name");
+        });
 
-    it('should validate blocks', () => {
-        expect(() => validate({ type: STRUCTURE_TYPE.BLOCK, children: [] })).not.toThrow();
+        it('should validate blocks', () => {
+            expect(() => validate({ type: STRUCTURE_TYPE.BLOCK, children: [] })).not.toThrow();
 
-        expect(() => validate({ type: STRUCTURE_TYPE.BLOCK })).toThrow("top: Missing the following properties: children");
+            expect(() => validate({ type: STRUCTURE_TYPE.BLOCK })).toThrow("top: Missing the following properties: children");
 
-        expect(() => validate({ type: STRUCTURE_TYPE.BLOCK, children: [{ type: STRUCTURE_TYPE.VARIABLE }] })).toThrow("top.children.0: Missing the following properties: name");
+            expect(() => validate({ type: STRUCTURE_TYPE.BLOCK, children: [{ type: STRUCTURE_TYPE.VARIABLE }] })).toThrow("top.children.0: Missing the following properties: name");
+        });
+
+        it('should validate loops', () => {
+            expect(() => validate({ type: STRUCTURE_TYPE.LOOP, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(2), operator: COMPARISON_OPERATOR.EQUAL }, children: [] })).not.toThrow();
+
+            expect(() => validate({ type: STRUCTURE_TYPE.LOOP })).toThrow("top: Missing the following properties: condition, children");
+
+            expect(() => validate({ type: STRUCTURE_TYPE.LOOP, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(2), operator: COMPARISON_OPERATOR.EQUAL }, children: [{ type: STRUCTURE_TYPE.VARIABLE }] })).toThrow("top.children.0: Missing the following properties: name");
+
+            expect(() => validate({ type: STRUCTURE_TYPE.LOOP, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(1), operator: COMPARISON_OPERATOR.EQUAL }, children: [variable('foo', number(1))] })).toThrow("top.condition: Missing the following properties: right");
+
+            expect(() => validate({ type: STRUCTURE_TYPE.LOOP, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(2), operator: COMPARISON_OPERATOR.EQUAL }, children: [], pre: { type: STRUCTURE_TYPE.ASSIGNMENT, left: variable('foo') } })).toThrow("top.pre: Missing the following properties: right");
+
+            expect(() => validate({ type: STRUCTURE_TYPE.LOOP, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(2), operator: COMPARISON_OPERATOR.EQUAL }, children: [], post: { type: STRUCTURE_TYPE.ASSIGNMENT, left: variable('foo') } })).toThrow("top.post: Missing the following properties: right");
+        });
+
+        it('should validate math', () => {
+            expect(() => validate({ type: STRUCTURE_TYPE.MATH, left: number(1), right: number(2), operator: MATH_OPERATOR.ADD })).not.toThrow();
+
+            expect(() => validate({ type: STRUCTURE_TYPE.MATH })).toThrow("top: Missing the following properties: left, right, operator");
+
+            expect(() => validate({ type: STRUCTURE_TYPE.MATH, left: number(1), right: number(2), operator: 'foo' })).toThrow("top: Invalid operator: foo");
+
+            expect(() => validate({ type: STRUCTURE_TYPE.MATH, left: { type: STRUCTURE_TYPE.VARIABLE }, right: number(2), operator: MATH_OPERATOR.ADD })).toThrow("top.left: Missing the following properties: name");
+
+            expect(() => validate({ type: STRUCTURE_TYPE.MATH, left: number(1), right: { type: STRUCTURE_TYPE.VARIABLE }, operator: MATH_OPERATOR.ADD })).toThrow("top.right: Missing the following properties: name");
+        });
     });
 });

@@ -1,6 +1,6 @@
 const { Executor } = require("../src/executor");
-const { number, callFunction, conditional, comparison, variable, createFunction, assign } = require("../src/helpers");
-const { STRUCTURE_TYPE, VALUE_TYPE, COMPARISON_OPERATOR } = require("../src/types");
+const { number, callFunction, conditional, comparison, variable, createFunction, assign, math } = require("../src/helpers");
+const { STRUCTURE_TYPE, VALUE_TYPE, COMPARISON_OPERATOR, MATH_OPERATOR } = require("../src/types");
 
 describe('Executor', () => {
     describe('execute', () => {
@@ -203,6 +203,18 @@ describe('Executor', () => {
                 result = await executor.execute();
 
                 expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: false });
+            });
+
+            it('should handle variables', async () => {
+                const code = [
+                    assign('foo', number(1)),
+                    { type: STRUCTURE_TYPE.COMPARISON, left: variable('foo'), right: variable('foo'), operator: COMPARISON_OPERATOR.EQUAL },
+                ];
+                const executor = new Executor(code);
+
+                result = await executor.execute();
+
+                expect(result).toEqual({ type: VALUE_TYPE.BOOLEAN, value: true });
             });
         });
 
@@ -412,6 +424,107 @@ describe('Executor', () => {
             await executor.execute();
 
             expect(executor.getTopLevelContext().variables.myvar).toEqual(number(3));
+        });
+
+        describe('loops', () => {
+            it('should execute a loop for as long as the condition is true', async () => {
+                const code = [
+                    assign('myvar', number(0)),
+                    { type: STRUCTURE_TYPE.LOOP, condition: comparison(variable('myvar'), number(3), COMPARISON_OPERATOR.LESS_THAN), children: [assign('myvar', math(variable('myvar'), number(1), MATH_OPERATOR.ADD))] },
+                ];
+                const executor = new Executor(code);
+
+                await executor.execute();
+
+                expect(executor.getTopLevelContext().variables.myvar).toEqual(number(3));
+            });
+
+            it('should execute the pre condition', async () => {
+                const code = [
+                    assign('myvar', number(0)),
+                    { type: STRUCTURE_TYPE.LOOP, pre: assign('loop', number(0)), condition: comparison(variable('loop'), number(3), COMPARISON_OPERATOR.LESS_THAN), children: [
+                        assign('loop', math(variable('loop'), number(1), MATH_OPERATOR.ADD)),
+                        assign('myvar', variable('loop')),
+                    ] },
+                ];
+                const executor = new Executor(code);
+
+                await executor.execute();
+
+                expect(executor.getTopLevelContext().variables.myvar).toEqual(number(3));
+            });
+
+            it('should execute the post condition', async () => {
+                const code = [
+                    assign('myvar', number(0)),
+                    { type: STRUCTURE_TYPE.LOOP, pre: assign('loop', number(0)), condition: comparison(variable('loop'), number(3), COMPARISON_OPERATOR.LESS_THAN), post: assign('loop', math(variable('loop'), number(1), MATH_OPERATOR.ADD)), children: [assign('myvar', variable('loop'))] },
+                ];
+                const executor = new Executor(code);
+
+                await executor.execute();
+
+                // the loop will run 3 times, but the post condition will be executed after the loop so it only runs 2 times
+                expect(executor.getTopLevelContext().variables.myvar).toEqual(number(2));
+            });
+        });
+
+        describe('math', () => {
+            it('should be able to add two numbers', async () => {
+                const code = [
+                    assign('myvar', math(number(1), number(2), MATH_OPERATOR.ADD)),
+                ];
+                const executor = new Executor(code);
+
+                await executor.execute();
+
+                expect(executor.getTopLevelContext().variables.myvar).toEqual(number(3));
+            });
+
+            it('should be able to subtract two numbers', async () => {
+                const code = [
+                    assign('myvar', math(number(1), number(2), MATH_OPERATOR.SUBTRACT)),
+                ];
+                const executor = new Executor(code);
+
+                await executor.execute();
+
+                expect(executor.getTopLevelContext().variables.myvar).toEqual(number(-1));
+            });
+
+            it('should be able to multiply two numbers', async () => {
+                const code = [
+                    assign('myvar', math(number(2), number(2), MATH_OPERATOR.MULTIPLY)),
+                ];
+                const executor = new Executor(code);
+
+                await executor.execute();
+
+                expect(executor.getTopLevelContext().variables.myvar).toEqual(number(4));
+            });
+
+            it('should be able to divide two numbers', async () => {
+                const code = [
+                    assign('myvar', math(number(4), number(2), MATH_OPERATOR.DIVIDE)),
+                ];
+
+                const executor = new Executor(code);
+
+                await executor.execute();
+
+                expect(executor.getTopLevelContext().variables.myvar).toEqual(number(2));
+            });
+
+            it('should be able to modulo two numbers', async () => {
+                const code = [
+                    assign('myvar', math(number(5), number(2), MATH_OPERATOR.MODULO)),
+                ];
+
+                const executor = new Executor(code);
+
+                await executor.execute();
+
+                expect(executor.getTopLevelContext().variables.myvar).toEqual(number(1));
+            });
         });
     });
 });

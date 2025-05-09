@@ -1,4 +1,4 @@
-const { STRUCTURE_TYPE, VALUE_TYPE, COMPARISON_OPERATOR } = require("./types");
+const { STRUCTURE_TYPE, VALUE_TYPE, COMPARISON_OPERATOR, MATH_OPERATOR } = require("./types");
 const { validate } = require("./validator");
 
 class Executor {
@@ -120,20 +120,30 @@ class Executor {
             const left = await this.executeNode(node.left, context);
             const right = await this.executeNode(node.right, context);
             const operator = node.operator;
-            
+
+            let leftValue = left.value; 
+            let rightValue = right.value;
+
+            if (left.type === VALUE_TYPE.VARIABLE) {
+                leftValue = this.__findInContext(context, left.value).value;
+            }
+            if (right.type === VALUE_TYPE.VARIABLE) {
+                rightValue = this.__findInContext(context, right.value).value;
+            }
+
             let result = false;
             if (operator === COMPARISON_OPERATOR.EQUAL) {
-                result = left.value === right.value;
+                result = leftValue === rightValue;
             } else if (operator === COMPARISON_OPERATOR.NOT_EQUAL) {
-                result = left.value !== right.value;
+                result = leftValue !== rightValue;
             } else if (operator === COMPARISON_OPERATOR.GREATER_THAN) {
-                result = left.value > right.value;
+                result = leftValue > rightValue;
             } else if (operator === COMPARISON_OPERATOR.LESS_THAN) {
-                result = left.value < right.value;
+                result = leftValue < rightValue;
             } else if (operator === COMPARISON_OPERATOR.GREATER_THAN_OR_EQUAL) {
-                result = left.value >= right.value;
+                result = leftValue >= rightValue;
             } else if (operator === COMPARISON_OPERATOR.LESS_THAN_OR_EQUAL) {
-                result = left.value <= right.value;
+                result = leftValue <= rightValue;
             }
 
             return {
@@ -197,6 +207,62 @@ class Executor {
             for (const child of node.children) {
                 await this.executeNode(child, childContext);
             }
+        } else if (node.type === STRUCTURE_TYPE.LOOP) {
+            const childContext = {
+                parent: context,
+                variables: {},
+            };
+
+            if (node.pre) {
+                await this.executeNode(node.pre, childContext);
+            }
+
+            while (true) {
+                const result = await this.executeNode(node.condition, childContext);
+                if (!result.value) {
+                    break;
+                }
+
+                for (const child of node.children) {
+                    await this.executeNode(child, childContext);
+                }
+
+                if (node.post) {
+                await this.executeNode(node.post, childContext);
+                }
+            }
+        } else if (node.type === STRUCTURE_TYPE.MATH) {
+            const left = await this.executeNode(node.left, context);
+            const right = await this.executeNode(node.right, context);
+            const operator = node.operator;
+
+            let leftValue = left.value;
+            let rightValue = right.value;
+
+            if (left.type === VALUE_TYPE.VARIABLE) {
+                leftValue = this.__findInContext(context, left.value).value;
+            }
+            if (right.type === VALUE_TYPE.VARIABLE) {
+                rightValue = this.__findInContext(context, right.value).value;
+            }
+
+            let result = null;
+            if (operator === MATH_OPERATOR.ADD) {
+                result = leftValue + rightValue;
+            } else if (operator === MATH_OPERATOR.SUBTRACT) {
+                result = leftValue - rightValue;
+            } else if (operator === MATH_OPERATOR.MULTIPLY) {
+                result = leftValue * rightValue;
+            } else if (operator === MATH_OPERATOR.DIVIDE) {
+                result = leftValue / rightValue;
+            } else if (operator === MATH_OPERATOR.MODULO) {
+                result = leftValue % rightValue;
+            }
+
+            return {
+                type: VALUE_TYPE.NUMBER,
+                value: result,
+            };
         } else {
             throw new Error(`Unknown node type: ${node.type}`);
         }

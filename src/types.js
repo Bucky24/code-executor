@@ -10,6 +10,8 @@ const STRUCTURE_TYPE = {
     CONDITIONAL_GROUP: "conditional_group",
     FUNCTION: "function",
     BLOCK: "block",
+    LOOP: "loop",
+    MATH: "math",
 };
 
 const COMPARISON_OPERATOR = {
@@ -30,8 +32,17 @@ const VALUE_TYPE = {
     VARIABLE: "variable",
 };
 
+const MATH_OPERATOR = {
+    ADD: "add",
+    SUBTRACT: "subtract",
+    MULTIPLY: "multiply",
+    DIVIDE: "divide",
+    MODULO: "modulo",
+};
+
 module.exports = {
     STRUCTURE_TYPE,
     VALUE_TYPE,
     COMPARISON_OPERATOR,
+    MATH_OPERATOR,
 };

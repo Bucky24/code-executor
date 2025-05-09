@@ -50,6 +50,14 @@ const helpers = {
             children,
         };
     },
+    math: (left, right, operator) => {
+        return {
+            type: STRUCTURE_TYPE.MATH,
+            left,
+            right,
+            operator,
+        };
+    },
 };
 
 module.exports = helpers;
