@@ -263,6 +263,15 @@ class Executor {
                 type: VALUE_TYPE.NUMBER,
                 value: result,
             };
+        } else if (node.type === STRUCTURE_TYPE.OBJECT) {
+            const result = {};
+            for (const property in node.properties) {
+                result[property] = await this.executeNode(node.properties[property], context);
+            }
+            return {
+                type: VALUE_TYPE.OBJECT,
+                value: result,
+            };
         } else {
             throw new Error(`Unknown node type: ${node.type}`);
         }

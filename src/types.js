@@ -12,6 +12,7 @@ const STRUCTURE_TYPE = {
     BLOCK: "block",
     LOOP: "loop",
     MATH: "math",
+    OBJECT: "object",
 };
 
 const COMPARISON_OPERATOR = {
@@ -30,6 +31,7 @@ const VALUE_TYPE = {
     NULL: "null",
     BOOLEAN: "boolean",
     VARIABLE: "variable",
+    OBJECT: "object",
 };
 
 const MATH_OPERATOR = {

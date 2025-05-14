@@ -75,6 +75,11 @@ function validate(structure, path = ['top']) {
             if (!Object.values(MATH_OPERATOR).includes(structure.operator)) {
                 throw new Error(`Invalid operator: ${structure.operator}`);
             }
+        } else if (structure.type === STRUCTURE_TYPE.OBJECT) {
+            checkForKeys(structure, ['properties']);
+            for (const property in structure.properties) {
+                validate(structure.properties[property], [...path, 'properties', property]);
+            }
         } else {
             throw new Error(`Unknown structure type: ${structure.type}`);
         }

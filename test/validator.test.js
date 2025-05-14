@@ -108,5 +108,16 @@ describe('validator', () => {
 
             expect(() => validate({ type: STRUCTURE_TYPE.MATH, left: number(1), right: { type: STRUCTURE_TYPE.VARIABLE }, operator: MATH_OPERATOR.ADD })).toThrow("top.right: Missing the following properties: name");
         });
+
+        it('should validate objects', () => {
+            expect(() => validate({ type: STRUCTURE_TYPE.OBJECT, properties: {} })).not.toThrow();
+
+            expect(() => validate({ type: STRUCTURE_TYPE.OBJECT })).toThrow("top: Missing the following properties: properties");
+
+            expect(() => validate({ type: STRUCTURE_TYPE.OBJECT, properties: {
+                foo: { type: STRUCTURE_TYPE.NUMBER}
+            } })).toThrow("top.properties.foo: Missing the following properties: value");
+            
+        });
     });
 });

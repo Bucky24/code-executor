@@ -526,5 +526,16 @@ describe('Executor', () => {
                 expect(executor.getTopLevelContext().variables.myvar).toEqual(number(1));
             });
         });
+
+        it('should be able to create an object', async () => {
+            const code = [
+                assign('myvar', { type: STRUCTURE_TYPE.OBJECT, properties: { foo: number(2) }}),
+            ];
+            const executor = new Executor(code);
+
+            await executor.execute();
+
+            expect(executor.getTopLevelContext().variables.myvar).toEqual({ type: VALUE_TYPE.OBJECT, value: { foo: { type: VALUE_TYPE.NUMBER, value: 2 }}});
+        });
     });
 });
