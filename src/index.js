@@ -1,5 +1,6 @@
 const { Executor } = require("./executor");
-
+const { validate } = require("./validator");
+const { STRUCTURE_TYPE } = require("./types");
 
 async function execute(code) {
     const executor = new Executor(code);
@@ -9,4 +10,6 @@ async function execute(code) {
 
 module.exports = {
     execute,
+    validate,
+    STRUCTURE_TYPE,
 };
