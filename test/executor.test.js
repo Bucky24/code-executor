@@ -537,5 +537,41 @@ describe('Executor', () => {
 
             expect(executor.getTopLevelContext().variables.myvar).toEqual({ type: VALUE_TYPE.OBJECT, value: { foo: { type: VALUE_TYPE.NUMBER, value: 2 }}});
         });
+
+        describe('paths', () => {
+            it('should handle paths', async () => {
+                const code = [
+                    assign('myvar', { type: STRUCTURE_TYPE.OBJECT, properties: { foo: number(2) }}),
+                    { type: STRUCTURE_TYPE.PATH, path: ['foo'], left: variable('myvar') },
+                ];
+                const executor = new Executor(code);
+
+                const result = await executor.execute();
+
+                expect(result).toEqual({ type: VALUE_TYPE.NUMBER, value: 2 });
+            });
+
+            it('should error if the path is invalid', async () => {
+                const code = [
+                    assign('myvar', { type: STRUCTURE_TYPE.OBJECT, properties: { foo: number(2) }}),
+                    { type: STRUCTURE_TYPE.PATH, path: ['bar'], left: variable('myvar') },
+                ];
+                const executor = new Executor(code);
+
+                expect(async () => await executor.execute()).rejects.toThrow("Invalid path: bar");
+            });
+
+            it('should nest more than one level', async () => {
+                const code = [
+                    assign('myvar', { type: STRUCTURE_TYPE.OBJECT, properties: { foo: { type: STRUCTURE_TYPE.OBJECT, properties: { bar: number(2) } } }}),
+                    { type: STRUCTURE_TYPE.PATH, path: ['foo', 'bar'], left: variable('myvar') },
+                ];
+                const executor = new Executor(code);
+
+                const result = await executor.execute();
+
+                expect(result).toEqual({ type: VALUE_TYPE.NUMBER, value: 2 });
+            });
+        });
     });
 });

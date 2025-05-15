@@ -13,6 +13,7 @@ const STRUCTURE_TYPE = {
     LOOP: "loop",
     MATH: "math",
     OBJECT: "object",
+    PATH: "path",
 };
 
 const COMPARISON_OPERATOR = {

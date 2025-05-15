@@ -119,5 +119,13 @@ describe('validator', () => {
             } })).toThrow("top.properties.foo: Missing the following properties: value");
             
         });
+
+        it('should validate paths', () => {
+            expect(() => validate({ type: STRUCTURE_TYPE.PATH, path: ['foo'], left: number(1) })).not.toThrow();
+
+            expect(() => validate({ type: STRUCTURE_TYPE.PATH })).toThrow("top: Missing the following properties: path, left");
+
+            expect(() => validate({ type: STRUCTURE_TYPE.PATH, path: ['foo'], left: { type: STRUCTURE_TYPE.VARIABLE } })).toThrow("top.left: Missing the following properties: name");
+        });
     });
 });

@@ -272,6 +272,28 @@ class Executor {
                 type: VALUE_TYPE.OBJECT,
                 value: result,
             };
+        } else if (node.type === STRUCTURE_TYPE.PATH) {
+            const left = await this.executeNode(node.left, context);
+            let current = left;
+
+            if (current.type === VALUE_TYPE.VARIABLE) {
+                current = this.__findInContext(context, current.value);
+            }
+
+            const path = [...node.path];
+            while (path.length > 0) {
+                const key = path.shift();
+                if (current.type === VALUE_TYPE.OBJECT) {
+                    if (current.value[key]) {
+                        current = current.value[key];
+                    } else {
+                        throw new Error(`Invalid path: ${key}`);
+                    }
+                } else {
+                    throw new Error(`Path on unknown value type: ${current.type}`);
+                }
+            }
+            return current;
         } else {
             throw new Error(`Unknown node type: ${node.type}`);
         }

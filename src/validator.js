@@ -80,6 +80,9 @@ function validate(structure, path = ['top']) {
             for (const property in structure.properties) {
                 validate(structure.properties[property], [...path, 'properties', property]);
             }
+        } else if (structure.type === STRUCTURE_TYPE.PATH) {
+            checkForKeys(structure, ['path', 'left']);
+            validate(structure.left, [...path, 'left']);
         } else {
             throw new Error(`Unknown structure type: ${structure.type}`);
         }
