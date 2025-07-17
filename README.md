@@ -18,14 +18,21 @@ It returns nothing, but will throw an `Error` if there are validation errors.
 
 A list of valid types for a `Statement`. See below for details.
 
-| COMPARISON | A comparison block |
-| CONDITIONAL | A statement that allows comparing two values |
-| CONDITIONAL_GROUP | Allows using boolean operators to compare multiple conditionals |
-| BLOCK | A group of `Statement` objects |
 | LOOP | A `Statement` that allows repeating code |
 | MATH | Allows math operations on values |
 | OBJECT | A key/value object |
 | PATH | A list of keys allowing diving into objects |
+
+### COMPARISON_OPERATOR
+
+A list of operators for use in comparisons
+
+| EQUAL | Checks for equality |
+| NOT_EQUAL | Checks for non-equality |
+| GREATER_THAN | Checks if left is greater than right |
+| LESS_THAN | Checks if left is less than right |
+| GREATER_THAN_OR_EQUAL | Checks if left is greater than or equal to right |
+| LESS_THAN_OR_EQUAL | Checks if left is less than or equal to right |
 
 ## Statement
 
@@ -82,3 +89,40 @@ Defines a block of re-usable code that can be called as desired.
 | name | The name of the function |
 | parameters | A list of `Statements` that provide the parameter names. Expected to be of type `VARIABLE` |
 | children | A list of `Statements` that provides the code that makes up the function.
+
+### COMPARISON
+
+Evaluates two statements against each other.
+
+| property | description |
+| -- | -- |
+| left | A `Statement` to provide the left value |
+| right | A `Statement` to provide the right value |
+| operator | One of `COMPARISON_OPERATOR` to do the comparison |
+
+### CONDITIONAL
+
+Executes enclosed statements only if the attached comparison is true.
+
+| property | description |
+| -- | -- |
+| condition | A `Statement` (usually a `COMPARISON`). If true, the attached statements will execute
+| children | A list of `Statements` that will run if the condition is true
+
+### CONDITIONAL_GROUP
+
+Defines a list of `CONDITIONALS`, executing the statements of the first matching `CONDITIONAL`. Once a match is found, no further `CONDITIONALS` are checked.
+
+| property | description |
+| -- | -- |
+| children | A list of `STATEMENTS` that are expected to be `CONDITIONALS` |
+| finally | A list of `STATEMENTS` that are executed after any matching `CONDITIONAL`. Optional |
+
+### BLOCK
+
+A logical group of `Statements`, all the `BLOCK` does is simply execute all its children. Used mostly for easier structure of your input data. Blocks do create a new context, but do not add anything to that context. As such, they can also be used to prevent data from leaking to a higher context.
+
+| property | description |
+| -- | -- |
+| children | A list of `STATEMENTS` |
+
