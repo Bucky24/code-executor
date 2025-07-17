@@ -18,11 +18,6 @@ It returns nothing, but will throw an `Error` if there are validation errors.
 
 A list of valid types for a `Statement`. See below for details.
 
-| LOOP | A `Statement` that allows repeating code |
-| MATH | Allows math operations on values |
-| OBJECT | A key/value object |
-| PATH | A list of keys allowing diving into objects |
-
 ### COMPARISON_OPERATOR
 
 A list of operators for use in comparisons
@@ -33,6 +28,16 @@ A list of operators for use in comparisons
 | LESS_THAN | Checks if left is less than right |
 | GREATER_THAN_OR_EQUAL | Checks if left is greater than or equal to right |
 | LESS_THAN_OR_EQUAL | Checks if left is less than or equal to right |
+
+### MATH_OPERATOR
+
+Operators for use in math statments
+
+| ADD |
+| SUBTRACT |
+| MULTIPLY |
+| DIVIDE |
+| MODULO |
 
 ## Statement
 
@@ -126,3 +131,40 @@ A logical group of `Statements`, all the `BLOCK` does is simply execute all its 
 | -- | -- |
 | children | A list of `STATEMENTS` |
 
+### LOOP
+
+Allows `Statements` to be repeated in a controlled manner.
+
+| property | description |
+| -- | -- |
+| pre | A `Statement` to be executed before the loop starts. Runs in loop context. Optional |
+| condition | A `Statement` that runs before every loop. If it does not evaluate to true, the loop ends. Runs in loop context. |
+| post | A `Statement` to be executed after each loop iteration. Runsin loop context. Optional |
+| children | A list of `Statements` to be run every loop iteration |
+
+### MATH
+
+Allows numeric operations to be performed on two values.
+
+| property | description |
+| -- | -- |
+| left | A `Statement` that provides the left-hand side of the equation |
+| right | A `Statement` that provides the right-hand side of the equation |
+| operator | One of `MATH_OPERATOR` |
+
+### OBJECT
+
+Provides the definition for a standard key/value pair object
+
+| property | description |
+| -- | -- |
+| properties | A map where the keys are any valid property key and the values are `Statements` |
+
+### PATH
+
+Provides a way to dive deeper into nested objects and draw out nested properties.
+
+| property | description |
+| -- | -- |
+| left | A `Statement` providing the start of the path |
+| path | An array of strings indicating the path to follow |
