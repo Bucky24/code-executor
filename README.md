@@ -26,6 +26,21 @@ The `createContext` method allows easy creation of a `Context` for use in the `e
 | variables | Object with key being variable name and value being variable value | List of variables for the new context |
 | functions | Object with key being function name and value being function callback | List of functions for the new context |
 
+Context functions take in two parameters. The first is an array of arguments, and the second is the context that the function was called from.
+
+#### findInContext
+
+This method takes in a context and a variable name and looks up the corresponding value.
+
+| argument | type | description |
+| -- | -- | -- |
+| context | The `Context` to search (will also search parent contexts) |
+| variable | The variable name to find |
+
+#### getTopLevelContext
+
+This method returns the top level global `Context` that the `Executor` is working with.
+
 ### validate
 
 The `validate` function verifies that a code syntax is valid and can be executed. It takes in a single parameter, which is intended to be an array of `Statement` objects.

@@ -66,14 +66,20 @@ describe('Executor', () => {
         it('should pass arguments to the function', async () => {
             const code = { type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [ number(1) ] };
             let args = null;
-            const context = Executor.createContext({}, { foo: (arg) => {
+            let calledContext = null;
+            const context = Executor.createContext({}, { foo: (arg, context) => {
                 args = arg;
+                calledContext = context;
             }});
             const executor = new Executor(code, context);
 
             await executor.execute();
 
-            expect(args).toEqual({ type: VALUE_TYPE.NUMBER, value: 1 });
+            expect(args).toEqual([{ type: VALUE_TYPE.NUMBER, value: 1 }]);
+            expect(calledContext).toStrictEqual({
+                parent: context,
+                variables: {},
+            });
         });
 
         describe('comparisons', () => {

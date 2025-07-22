@@ -52,12 +52,12 @@ class Executor {
             const left = await this.executeNode(node.left, context);
 
             if (value.type === VALUE_TYPE.VARIABLE) {
-                value = this.__findInContext(context, value.value);
+                value = this.findInContext(context, value.value);
             }
 
             if (left.type === VALUE_TYPE.VARIABLE) {
                 try {
-                    const existing = this.__findInContext(context, left.value);
+                    const existing = this.findInContext(context, left.value);
                     existing.type = value.type;
                     existing.value = value.value;
                 } catch(e) {
@@ -89,12 +89,12 @@ class Executor {
                 functionArguments.push(await this.executeNode(arg, context));
             }
 
-            let funcData = this.__findInContext(context, functionName);
+            let funcData = this.findInContext(context, functionName);
             if (funcData.type !== VALUE_TYPE.FUNCTION) {
                 throw new Error(`${functionName} is not a function`);
             }
             if (funcData.rawFn) {
-                await funcData.rawFn(...functionArguments);
+                await funcData.rawFn([...functionArguments], context);
             } else {
                 const paramData = {};
                 for (let i = 0; i < funcData.parameters.length; i++) {
@@ -125,10 +125,10 @@ class Executor {
             let rightValue = right.value;
 
             if (left.type === VALUE_TYPE.VARIABLE) {
-                leftValue = this.__findInContext(context, left.value).value;
+                leftValue = this.findInContext(context, left.value).value;
             }
             if (right.type === VALUE_TYPE.VARIABLE) {
-                rightValue = this.__findInContext(context, right.value).value;
+                rightValue = this.findInContext(context, right.value).value;
             }
 
             let result = false;
@@ -240,10 +240,10 @@ class Executor {
             let rightValue = right.value;
 
             if (left.type === VALUE_TYPE.VARIABLE) {
-                leftValue = this.__findInContext(context, left.value).value;
+                leftValue = this.findInContext(context, left.value).value;
             }
             if (right.type === VALUE_TYPE.VARIABLE) {
-                rightValue = this.__findInContext(context, right.value).value;
+                rightValue = this.findInContext(context, right.value).value;
             }
 
             let result = null;
@@ -277,7 +277,7 @@ class Executor {
             let current = left;
 
             if (current.type === VALUE_TYPE.VARIABLE) {
-                current = this.__findInContext(context, current.value);
+                current = this.findInContext(context, current.value);
             }
 
             const path = [...node.path];
@@ -303,11 +303,11 @@ class Executor {
         };
     }
 
-    __findInContext(context, variable) {
+    findInContext(context, variable) {
         if (context.variables?.[variable]) {
             return context.variables[variable];
         } else if (context.parent) {
-            return this.__findInContext(context.parent, variable);
+            return this.findInContext(context.parent, variable);
         } else {
             throw new Error(`Variable ${variable} not found`);
         }
