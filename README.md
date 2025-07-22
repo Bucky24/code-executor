@@ -4,9 +4,27 @@ This is designed to be a somewhat lightweight way of executing a specific syntax
 
 ## Exports
 
-### execute
+### Executor
 
-The `execute` function is responsible for actually running the code. It takes in a single parameter, which is intended to be an array of `Statement` objects. It returns a promise that resolves once execution is complete.
+The `Executor` is the class that handles running code
+
+#### execute
+
+The `execute` function is responsible for actually running the code
+
+| argument | type | description |
+| -- | -- | -- |
+| statements | Statement[] | Statements to execute |
+| globalContext | Context | Starting context for the executor. Optional |
+
+#### createContext
+
+The `createContext` method allows easy creation of a `Context` for use in the `execute` function.
+
+| argument | type | description |
+| -- | -- | -- |
+| variables | Object with key being variable name and value being variable value | List of variables for the new context |
+| functions | Object with key being function name and value being function callback | List of functions for the new context |
 
 ### validate
 
@@ -38,6 +56,35 @@ Operators for use in math statments
 | MULTIPLY |
 | DIVIDE |
 | MODULO |
+
+### Context
+
+The Context is an object that provides functions, variables, and other data to a specific level of the program and all children of that level. This can be used to "inject" capabilities into your code.
+
+| property | description |
+| -- | -- |
+| variables | Object with keys being the names of the variables, and values being `ResultValue` |
+| functions | Object with keys being the names of the functions, and values being `ResultValue` with type `FUNCTION` |
+
+### ResultValue
+
+The `ResultValue` contains information and type and data for data that can be passed around the system.
+
+| property | description |
+| -- | -- |
+| type | One of `VALUE_TYPE` |
+| value | The value of the result |
+| rawFn | Only used for `FUNCTION`, to indicate a function that is a JS callback, as opposed to `Statements` |
+
+### VALUE_TYPE
+
+| STRING | string data |
+| NUMBER | numeric data |
+| FUNCTION | The full data and structure of a function, as `Statements` |
+| NULL | no data |
+| BOOLEAN | boolean data |
+| VARIABLE | A string that maps to another variable |
+| OBJECT | A hashmap with object data |
 
 ## Statement
 
