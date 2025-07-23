@@ -41,6 +41,15 @@ This method takes in a context and a variable name and looks up the correspondin
 
 This method returns the top level global `Context` that the `Executor` is working with.
 
+#### getValueFor
+
+This method takes in a context and a `ResultValue` and returns a scalar that represents the value 
+
+| argument | type | description |
+| -- | -- | -- |
+| context | The `Context` to search (will also search parent contexts) |
+| variable | The `ResultValue` to get a value for |
+
 ### validate
 
 The `validate` function verifies that a code syntax is valid and can be executed. It takes in a single parameter, which is intended to be an array of `Statement` objects.

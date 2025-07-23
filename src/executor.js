@@ -316,6 +316,25 @@ class Executor {
     getTopLevelContext() {
         return this.context;
     }
+
+    getValueFor(context, variable) {
+        switch (variable.type) {
+            case VALUE_TYPE.BOOLEAN:
+            case VALUE_TYPE.NUMBER:
+            case VALUE_TYPE.STRING:
+                return variable.data;
+            case VALUE_TYPE.NULL:
+                return null;
+            case VALUE_TYPE.VARIABLE:
+                return this.getValueFor(context, this.findInContext(context, variable.data));
+            case VALUE_TYPE.FUNCTION:
+                return `__FUNCTION__`;
+            case VALUE_TYPE.OBJECT:
+                return `__OBJECT__`;
+            default:
+                throw new Error(`Unknow value type ${variable.type}`);
+        }
+    }
 }
 
 module.exports = {

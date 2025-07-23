@@ -580,4 +580,54 @@ describe('Executor', () => {
             });
         });
     });
+
+    describe('getValueFor', () => {
+        it('should return expected data for a bool', async () => {
+            const executor = new Executor([]);
+            
+            const result = executor.getValueFor({}, { type: VALUE_TYPE.BOOLEAN, data: true });
+
+            expect(result).toBe(true);
+        });
+
+        it('should return expected data for a number', async () => {
+            const executor = new Executor([]);
+            
+            const result = executor.getValueFor({}, { type: VALUE_TYPE.NUMBER, data: 7 });
+
+            expect(result).toBe(7);
+        });
+
+        it('should return expected data for a string', async () => {
+            const executor = new Executor([]);
+            
+            const result = executor.getValueFor({}, { type: VALUE_TYPE.STRING, data: "hi" });
+
+            expect(result).toBe("hi");
+        });
+
+        it('should return expected data for a null', async () => {
+            const executor = new Executor([]);
+            
+            const result = executor.getValueFor({}, { type: VALUE_TYPE.NULL });
+
+            expect(result).toBe(null);
+        });
+
+        it('should return expected data for a function', async () => {
+            const executor = new Executor([]);
+            
+            const result = executor.getValueFor({}, { type: VALUE_TYPE.FUNCTION });
+
+            expect(result).toBe("__FUNCTION__");
+        });
+
+        it('should return expected data for an object', async () => {
+            const executor = new Executor([]);
+            
+            const result = executor.getValueFor({}, { type: VALUE_TYPE.OBJECT });
+
+            expect(result).toBe("__OBJECT__");
+        });
+    });
 });
