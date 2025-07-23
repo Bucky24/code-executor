@@ -82,6 +82,28 @@ describe('Executor', () => {
             });
         });
 
+        it('should handle return value of raw function', async() => {
+            const code = assign('blar', callFunction('foo', []));
+            let calledContext = null;
+            const context = Executor.createContext({}, { foo: (arg, context) => {
+                calledContext = context;
+                return {
+                    type: VALUE_TYPE.NUMBER,
+                    value: 6,
+                };
+            }});
+            const executor = new Executor(code, context);
+
+            await executor.execute();
+
+            expect(calledContext.variables).toEqual({
+                blar: {
+                    type: VALUE_TYPE.NUMBER,
+                    value: 6,
+                },
+            });
+        });
+
         describe('comparisons', () => {
             it('should handle equals', async () => {
                 let code = { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(1), operator: COMPARISON_OPERATOR.EQUAL };

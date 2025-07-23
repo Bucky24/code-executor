@@ -93,8 +93,9 @@ class Executor {
             if (funcData.type !== VALUE_TYPE.FUNCTION) {
                 throw new Error(`${functionName} is not a function`);
             }
+            let result = null;
             if (funcData.rawFn) {
-                await funcData.rawFn([...functionArguments], context);
+                result = await funcData.rawFn([...functionArguments], context);
             } else {
                 const paramData = {};
                 for (let i = 0; i < funcData.parameters.length; i++) {
@@ -116,6 +117,14 @@ class Executor {
                     await this.executeNode(child, childContext);
                 }
             }
+
+            if (!result) {
+                return {
+                    type: VALUE_TYPE.NULL,
+                };
+            }
+
+            return result;
         } else if (node.type === STRUCTURE_TYPE.COMPARISON) {
             const left = await this.executeNode(node.left, context);
             const right = await this.executeNode(node.right, context);
