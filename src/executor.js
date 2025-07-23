@@ -322,11 +322,11 @@ class Executor {
             case VALUE_TYPE.BOOLEAN:
             case VALUE_TYPE.NUMBER:
             case VALUE_TYPE.STRING:
-                return variable.data;
+                return variable.value;
             case VALUE_TYPE.NULL:
                 return null;
             case VALUE_TYPE.VARIABLE:
-                return this.getValueFor(context, this.findInContext(context, variable.data));
+                return this.getValueFor(context, this.findInContext(context, variable.value));
             case VALUE_TYPE.FUNCTION:
                 return `__FUNCTION__`;
             case VALUE_TYPE.OBJECT:

@@ -585,7 +585,7 @@ describe('Executor', () => {
         it('should return expected data for a bool', async () => {
             const executor = new Executor([]);
             
-            const result = executor.getValueFor({}, { type: VALUE_TYPE.BOOLEAN, data: true });
+            const result = executor.getValueFor({}, { type: VALUE_TYPE.BOOLEAN, value: true });
 
             expect(result).toBe(true);
         });
@@ -593,7 +593,7 @@ describe('Executor', () => {
         it('should return expected data for a number', async () => {
             const executor = new Executor([]);
             
-            const result = executor.getValueFor({}, { type: VALUE_TYPE.NUMBER, data: 7 });
+            const result = executor.getValueFor({}, { type: VALUE_TYPE.NUMBER, value: 7 });
 
             expect(result).toBe(7);
         });
@@ -601,7 +601,7 @@ describe('Executor', () => {
         it('should return expected data for a string', async () => {
             const executor = new Executor([]);
             
-            const result = executor.getValueFor({}, { type: VALUE_TYPE.STRING, data: "hi" });
+            const result = executor.getValueFor({}, { type: VALUE_TYPE.STRING, value: "hi" });
 
             expect(result).toBe("hi");
         });
