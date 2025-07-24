@@ -440,6 +440,19 @@ describe('Executor', () => {
     
                 expect(executor.getTopLevelContext().variables.myvar).toEqual(number(1));
             });
+
+            it('should be able to call a function that is defined after the call site', async () => {
+                const code = [
+                    assign('myvar', number(2)),
+                    callFunction('foo', [number(1)]),
+                    createFunction('foo', [variable('arg')], [assign('myvar', variable('arg'))]),
+                ];
+                const executor = new Executor(code);
+    
+                await executor.execute();
+    
+                expect(executor.getTopLevelContext().variables.myvar).toEqual(number(1));
+            });
         });
 
         it('should be able to execute a block', async () => {

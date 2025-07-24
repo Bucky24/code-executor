@@ -40,6 +40,31 @@ class Executor {
     async execute() {
         const executeCode = Array.isArray(this.code) ? this.code : [this.code];
         let result = null;
+
+        // run through all function creations to pre-populate the context
+        for (const node of executeCode) {
+            if (node.type === STRUCTURE_TYPE.FUNCTION) {
+                const functionName = node.name;
+
+                const funcData = {
+                    type: VALUE_TYPE.FUNCTION,
+                    parameters: node.parameters,
+                    children: node.children,
+                    context: this.context,
+                };
+
+                if (!node.name) {
+                    return funcData;
+                }
+
+                this.context.variables[functionName] = {
+                    ...funcData,
+                    name: functionName,
+                };
+                // don't process this again during further loops
+                node.type = STRUCTURE_TYPE.NOOP;
+            }
+        }
         for (const node of executeCode) {
             result = await this.executeNode(node, this.context);
         }
@@ -208,6 +233,7 @@ class Executor {
                 ...funcData,
                 name: functionName,
             };
+            
         } else if (node.type === STRUCTURE_TYPE.BLOCK) {
             const childContext = {
                 parent: context,
@@ -303,6 +329,8 @@ class Executor {
                 }
             }
             return current;
+        } else if (node.type === STRUCTURE_TYPE.NOOP) {
+            // nothing, noop
         } else {
             throw new Error(`Unknown node type: ${node.type}`);
         }

@@ -158,7 +158,7 @@ Represents a call to a pre-defined function. This could be a local function or a
 
 ### FUNCTION
 
-Defines a block of re-usable code that can be called as desired.
+Defines a block of re-usable code that can be called as desired. Function definitions are processed before the main code loop, so it is possible to define a function after it is called.
 
 | property | description |
 | -- | -- |
