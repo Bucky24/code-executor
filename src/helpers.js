@@ -58,6 +58,12 @@ const helpers = {
             operator,
         };
     },
+    returnFn: (child) => {
+        return {
+            type: STRUCTURE_TYPE.RETURN,
+            children: child ? [child] : [],
+        };
+    },
 };
 
 module.exports = helpers;

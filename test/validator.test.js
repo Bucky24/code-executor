@@ -127,5 +127,13 @@ describe('validator', () => {
 
             expect(() => validate({ type: STRUCTURE_TYPE.PATH, path: ['foo'], left: { type: STRUCTURE_TYPE.VARIABLE } })).toThrow("top.left: Missing the following properties: name");
         });
+
+        it('should validate return', () => {
+            expect(() => validate({ type: STRUCTURE_TYPE.RETURN, children: [] })).not.toThrow();
+            
+            expect(() => validate({ type: STRUCTURE_TYPE.RETURN })).toThrow("top: Missing the following properties: children");
+            
+            expect(() => validate({ type: STRUCTURE_TYPE.RETURN, children: [{ type: STRUCTURE_TYPE.VARIABLE }] })).toThrow("top.children.0: Missing the following properties: name");
+        });
     });
 });

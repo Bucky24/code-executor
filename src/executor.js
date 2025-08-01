@@ -139,7 +139,14 @@ class Executor {
                     },
                 };
                 for (const child of funcData.children) {
-                    await this.executeNode(child, childContext);
+                    const childResult = await this.executeNode(child, childContext);
+                    if (childResult?.type === VALUE_TYPE.RETURN_VALUE) {
+                        // we actually want to return the return value here, not the actual result
+                        // which is of type return_value
+                        result = childResult.value;
+                        // execute no more
+                        break;
+                    }
                 }
             }
 
@@ -192,7 +199,10 @@ class Executor {
                     variables: {},
                 };
                 for (const child of node.children) {
-                    await this.executeNode(child, childContext);
+                    const result = await this.executeNode(child, childContext);
+                    if (result && result.type === VALUE_TYPE.RETURN_VALUE) {
+                        return result;
+                    }
                 }
                 return {
                     type: VALUE_TYPE.BOOLEAN,
@@ -206,6 +216,10 @@ class Executor {
         } else if (node.type === STRUCTURE_TYPE.CONDITIONAL_GROUP) {
             for (const child of node.children) {
                 const result = await this.executeNode(child, context);
+                if (result.type === VALUE_TYPE.RETURN_VALUE) {
+                    // immediately quit the group
+                    return result;
+                }
                 if (result.value) {
                     // found one that matched
                     break;
@@ -240,7 +254,10 @@ class Executor {
                 variables: {},
             };
             for (const child of node.children) {
-                await this.executeNode(child, childContext);
+                const result = await this.executeNode(child, childContext);
+                if (result?.type === VALUE_TYPE.RETURN_VALUE) {
+                    return result;
+                }
             }
         } else if (node.type === STRUCTURE_TYPE.LOOP) {
             const childContext = {
@@ -259,11 +276,14 @@ class Executor {
                 }
 
                 for (const child of node.children) {
-                    await this.executeNode(child, childContext);
+                    const result = await this.executeNode(child, childContext);
+                    if (result?.type === VALUE_TYPE.RETURN_VALUE) {
+                        return result;
+                    }
                 }
 
                 if (node.post) {
-                await this.executeNode(node.post, childContext);
+                    await this.executeNode(node.post, childContext);
                 }
             }
         } else if (node.type === STRUCTURE_TYPE.MATH) {
@@ -331,6 +351,16 @@ class Executor {
             return current;
         } else if (node.type === STRUCTURE_TYPE.NOOP) {
             // nothing, noop
+        } else if (node.type === STRUCTURE_TYPE.RETURN) {
+            let value = null;
+            if (node.children.length > 0) {
+                value = await this.executeNode(node.children[0], context);
+            }
+
+            return {
+                type: VALUE_TYPE.RETURN_VALUE,
+                value: value,
+            };l
         } else {
             throw new Error(`Unknown node type: ${node.type}`);
         }
@@ -368,6 +398,8 @@ class Executor {
                 return `__FUNCTION__`;
             case VALUE_TYPE.OBJECT:
                 return `__OBJECT__`;
+            case VALUE_TYPE.RETURN_VALUE:
+                return this.getValueFor(context, variable.value);
             default:
                 throw new Error(`Unknow value type ${variable.type}`);
         }

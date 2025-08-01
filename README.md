@@ -109,6 +109,7 @@ The `ResultValue` contains information and type and data for data that can be pa
 | BOOLEAN | boolean data |
 | VARIABLE | A string that maps to another variable |
 | OBJECT | A hashmap with object data |
+| RETURN_VALUE | A special datatype that indicates a value generated from a `RETURN` statement. Should usually be bubbled up the stack to be returned from a function |
 
 ## Statement
 
@@ -239,3 +240,11 @@ Provides a way to dive deeper into nested objects and draw out nested properties
 | -- | -- |
 | left | A `Statement` providing the start of the path |
 | path | An array of strings indicating the path to follow |
+
+### RETURN
+
+Provides a way to exit a function at a specific point, returning an optional value. All blocks elements will exit as soon as they detect a RETURN statement has run.
+
+| property | description |
+| -- | -- |
+| children | Only the first child is used, should execute to a value |

@@ -1,5 +1,5 @@
 const { Executor } = require("../src/executor");
-const { number, callFunction, conditional, comparison, variable, createFunction, assign, math } = require("../src/helpers");
+const { number, callFunction, conditional, comparison, variable, createFunction, assign, math, returnFn } = require("../src/helpers");
 const { STRUCTURE_TYPE, VALUE_TYPE, COMPARISON_OPERATOR, MATH_OPERATOR } = require("../src/types");
 
 describe('Executor', () => {
@@ -276,6 +276,28 @@ describe('Executor', () => {
 
                 expect(called).toBe(false);
             });
+
+            it('should pass through return value and not execute further children', async () => {
+                const code = [
+                    { type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(1), operator: COMPARISON_OPERATOR.EQUAL }, children: [{ type: STRUCTURE_TYPE.RETURN, children: [number(5)] }, { type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [] }] },
+                ]; 
+                let called = false;
+                const context = Executor.createContext({}, { foo: () => {
+                    called = true;
+                }});
+                const executor = new Executor(code, context);
+
+                const result = await executor.execute();
+
+                expect(result).toEqual({
+                    type: VALUE_TYPE.RETURN_VALUE,
+                    value: {
+                        type: VALUE_TYPE.NUMBER,
+                        value: 5,
+                    },
+                });
+                expect(called).toBe(false);
+            });
         });
 
         describe('conditional group', () => {
@@ -390,6 +412,42 @@ describe('Executor', () => {
                 expect(calledFoo).toBe(false);
                 expect(calledBar).toBe(true);
             });
+
+            it('should return immediately if return value detected and not execute finally', async () => {
+                const code = [
+                    {
+                        type: STRUCTURE_TYPE.CONDITIONAL_GROUP,
+                        children: [
+                            conditional(comparison(number(1), number(1), COMPARISON_OPERATOR.EQUAL), [returnFn(number(5)),callFunction('foo', [])]),
+                            conditional(comparison(number(1), number(1), COMPARISON_OPERATOR.EQUAL), [callFunction('foo', [])]),
+                        ],
+                        finally: callFunction('bar', []),
+                    },
+                ];
+                let calledFoo = false;
+                let calledBar = false;
+                const context = Executor.createContext({}, {
+                    foo: () => {
+                        calledFoo = true;
+                    },
+                    bar: () => {
+                        calledBar = true;
+                    },
+                });
+                const executor = new Executor(code, context);
+
+                const result = await executor.execute();
+
+                expect(calledFoo).toBe(false);
+                expect(calledBar).toBe(false);
+                expect(result).toEqual({
+                    type: VALUE_TYPE.RETURN_VALUE,
+                    value: {
+                        type: VALUE_TYPE.NUMBER,
+                        value: 5,
+                    },
+                });
+            });
         });
 
         it('should be able to assign a function', async () => {
@@ -453,18 +511,50 @@ describe('Executor', () => {
     
                 expect(executor.getTopLevelContext().variables.myvar).toEqual(number(1));
             });
+
+            it('should handle the return value of an internal function', async () => {
+                const code = [
+                    assign('myvar', number(2)),
+                    createFunction('foo', [], [returnFn(number(3))]),
+                    assign('myvar', callFunction('foo', [])),
+                ];
+                const executor = new Executor(code);
+    
+                await executor.execute();
+    
+                expect(executor.getTopLevelContext().variables.myvar).toEqual(number(3));
+            });
         });
 
-        it('should be able to execute a block', async () => {
-            const code = [
-                assign('myvar', number(2)),
-                { type: STRUCTURE_TYPE.BLOCK, children: [assign('myvar', number(3)),]}
-            ];
-            const executor = new Executor(code);
-    
-            await executor.execute();
+        describe('block', () => {
+            it('should be able to execute a block', async () => {
+                const code = [
+                    assign('myvar', number(2)),
+                    { type: STRUCTURE_TYPE.BLOCK, children: [assign('myvar', number(3)),]}
+                ];
+                const executor = new Executor(code);
+        
+                await executor.execute();
 
-            expect(executor.getTopLevelContext().variables.myvar).toEqual(number(3));
+                expect(executor.getTopLevelContext().variables.myvar).toEqual(number(3));
+            });
+
+            it('should pass a return value through', async () => {
+                const code = [
+                    { type: STRUCTURE_TYPE.BLOCK, children: [returnFn(number(3)),]}
+                ];
+                const executor = new Executor(code);
+        
+                const result = await executor.execute();
+
+                expect(result).toEqual({
+                    type: VALUE_TYPE.RETURN_VALUE,
+                    value: {
+                        type: VALUE_TYPE.NUMBER,
+                        value: 3,
+                    },
+                });
+            });
         });
 
         describe('loops', () => {
@@ -506,6 +596,25 @@ describe('Executor', () => {
 
                 // the loop will run 3 times, but the post condition will be executed after the loop so it only runs 2 times
                 expect(executor.getTopLevelContext().variables.myvar).toEqual(number(2));
+            });
+
+            it('should pass though return value and quit loop when returning', async () => {
+                const code = [
+                    assign('myvar', number(0)),
+                    { type: STRUCTURE_TYPE.LOOP, condition: comparison(variable('myvar'), number(3), COMPARISON_OPERATOR.LESS_THAN), children: [assign('myvar', math(variable('myvar'), number(1), MATH_OPERATOR.ADD)), conditional(comparison(variable('myvar'), number(1), COMPARISON_OPERATOR.GREATER_THAN_OR_EQUAL),[returnFn(number(5))])] },
+                ];
+                const executor = new Executor(code);
+
+                const result = await executor.execute();
+
+                expect(executor.getTopLevelContext().variables.myvar).toEqual(number(1));
+                expect(result).toEqual({
+                    type: VALUE_TYPE.RETURN_VALUE,
+                    value: {
+                        type: VALUE_TYPE.NUMBER,
+                        value: 5,
+                    },
+                });
             });
         });
 
@@ -661,6 +770,14 @@ describe('Executor', () => {
             const executor = new Executor([]);
             
             const result = executor.getValueFor({}, { type: VALUE_TYPE.OBJECT });
+
+            expect(result).toBe("__OBJECT__");
+        });
+
+        it('should return nested data for a return value', async () => {
+            const executor = new Executor([]);
+            
+            const result = executor.getValueFor({}, { type: VALUE_TYPE.RETURN_VALUE, value: { type: VALUE_TYPE.OBJECT }});
 
             expect(result).toBe("__OBJECT__");
         });

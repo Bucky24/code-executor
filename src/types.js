@@ -14,6 +14,7 @@ const STRUCTURE_TYPE = {
     OBJECT: "object",
     PATH: "path",
     NOOP: "noop",
+    RETURN: "return",
 };
 
 const COMPARISON_OPERATOR = {
@@ -33,6 +34,7 @@ const VALUE_TYPE = {
     BOOLEAN: "boolean",
     VARIABLE: "variable",
     OBJECT: "object",
+    RETURN_VALUE: "return_value",
 };
 
 const MATH_OPERATOR = {
