@@ -64,6 +64,8 @@ A list of valid types for a `Statement`. See below for details.
 
 A list of operators for use in comparisons
 
+| Type | Description |
+| -- | -- |
 | EQUAL | Checks for equality |
 | NOT_EQUAL | Checks for non-equality |
 | GREATER_THAN | Checks if left is greater than right |
@@ -75,6 +77,8 @@ A list of operators for use in comparisons
 
 Operators for use in math statments
 
+| Operator |
+| -- |
 | ADD |
 | SUBTRACT |
 | MULTIPLY |
