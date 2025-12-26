@@ -85,6 +85,28 @@ Operators for use in math statments
 | DIVIDE |
 | MODULO |
 
+### VALUE_TYPE
+
+| STRING | string data |
+| NUMBER | numeric data |
+| FUNCTION | The full data and structure of a function, as `Statements` |
+| NULL | no data |
+| BOOLEAN | boolean data |
+| VARIABLE | A string that maps to another variable |
+| OBJECT | A hashmap with object data |
+| RETURN_VALUE | A special datatype that indicates a value generated from a `RETURN` statement. Should usually be bubbled up the stack to be returned from a function |
+
+### Tokenize
+
+The `Tokenize` method takes in a string of code and a series of "interesting" characters. It returns the code tokenized and broken apart by these characters.
+
+| argument | type | description |
+| -- | -- | -- |
+| code | String | code to tokenize |
+| splitTokens | String[] | List of tokens to split by. These tokens are also included in the output. |
+
+## Types
+
 ### Context
 
 The Context is an object that provides functions, variables, and other data to a specific level of the program and all children of that level. This can be used to "inject" capabilities into your code.
@@ -104,16 +126,6 @@ The `ResultValue` contains information and type and data for data that can be pa
 | value | The value of the result |
 | rawFn | Only used for `FUNCTION`, to indicate a function that is a JS callback, as opposed to `Statements` |
 
-### VALUE_TYPE
-
-| STRING | string data |
-| NUMBER | numeric data |
-| FUNCTION | The full data and structure of a function, as `Statements` |
-| NULL | no data |
-| BOOLEAN | boolean data |
-| VARIABLE | A string that maps to another variable |
-| OBJECT | A hashmap with object data |
-| RETURN_VALUE | A special datatype that indicates a value generated from a `RETURN` statement. Should usually be bubbled up the stack to be returned from a function |
 
 ## Statement
 
