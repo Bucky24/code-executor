@@ -16,13 +16,14 @@ class StateManager {
     }
 
     pop() {
+        const contextAsStatement = {
+            state: this.context.state,
+            ...this.context.data,
+            children: this.context.children,
+        };
         if (this.stack.length === 0) {
             if (this.context.state !== this.initialState) {
-                this.statements.push({
-                    state: this.context.state,
-                    ...this.context.data,
-                    children: this.context.children,
-                });
+                this.statements.push(contextAsStatement);
             }
             this.newContext();
         } else {
@@ -30,7 +31,7 @@ class StateManager {
             this.context = this.stack.pop();
             this.context.children = [
                 ...this.context.children || [],
-                oldContext,
+                contextAsStatement,
             ];
         }
     }
