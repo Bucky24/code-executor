@@ -93,11 +93,17 @@ class StateManager {
     }
 
     processToken(token) {
-        const stateFunction = this.states[this.context.state];
-        if (!stateFunction) {
+        const stateData = this.states[this.context.state];
+        if (!stateData) {
             throw new Error(`Don't know how to process state ${this.context.state}`);
         }
-        const result = stateFunction(token, this.getContext());
+        let func;
+        if (typeof stateData === 'function' && /^class\s/.test(Function.prototype.toString.call(stateData))) {
+            func = stateData.process;
+        } else if (typeof stateData === 'function') {
+            func = stateData;
+        }
+        const result = func(token, this.getContext(), this);
         if (!result) {
             throw new Error(`Unxpected token "${token}" at state ${this.context.state}`);
         }

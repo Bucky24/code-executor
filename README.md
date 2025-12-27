@@ -117,7 +117,7 @@ The constructor creates a new `StateManager`. It takes in the following paramete
 
 | Param | Description |
 | -- | -- |
-| stateMap | A map of state to process function. The function takes in 2 parameters. The first parameter is the current token. The second is the current state context, which includes the `state` and any data that you may have added. This function must return true if the token is processed. Any other response will cause an error to be thrown. |
+| stateMap | A map of state to process. The value can either be a function that takes in 3 parameters. The first parameter is the current token. The second is the current state context, which includes the `state` and any data that you may have added. The third paramter is a reference to the StateManager instance. This function must return true if the token is processed. Any other response will cause an error to be thrown. This value can also be a class. The class must contain a static member called "process" which behaves as the function described above. |
 | initialState | The initial state to start the manager from |
 
 #### setData
