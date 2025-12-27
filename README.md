@@ -87,6 +87,8 @@ Operators for use in math statments
 
 ### VALUE_TYPE
 
+| type | description |
+| -- | -- |
 | STRING | string data |
 | NUMBER | numeric data |
 | FUNCTION | The full data and structure of a function, as `Statements` |
@@ -104,6 +106,57 @@ The `Tokenize` method takes in a string of code and a series of "interesting" ch
 | -- | -- | -- |
 | code | String | code to tokenize |
 | splitTokens | String[] | List of tokens to split by. These tokens are also included in the output. |
+
+### StateManager
+
+The `StateManager` can provide assistance with generating your parse tree. It provides the following methods:
+
+#### constructor
+
+The constructor creates a new `StateManager`. It takes in the following parameters:
+
+| Param | Description |
+| -- | -- |
+| stateMap | A map of state to process function. The function takes in 2 parameters. The first parameter is the current token. The second is the current state context, which includes the `state` and any data that you may have added. This function must return true if the token is processed. Any other response will cause an error to be thrown. |
+| initialState | The initial state to start the manager from |
+
+#### setData
+
+This method allows changing any data field of the current context. It takes in an object, where the key is the path to what in the data should be modified (This is a dotpath which allows changing deeper objects). The value is the value to set. If the value to set is an array, and the existing value is also an array, the result will be the concatination of both arrays.
+
+#### setState
+
+This method changes the active state. Note that this will change the state of the current context, not create a new context (use the `push` method for creating a nested context). The second parameter of this method will also be passed into `setData` so you can set data and state in the same function.
+
+#### push
+
+This method adds the current context to the context stack and starts over from a brand new context. Use this when entering a statement block to allow recursive statement processing.
+
+| param | description |
+| -- | -- |
+| rewind | boolean, if true the current token will be replayed after the new context is generated. Optional, defaults false |
+
+#### pop
+
+The `pop` method should be called when the current statement is finished and ready for processing. If there are contexts on the stack, the current context is added to the `children` array of its parent. The parent is then popped of the stack and set as the current context.
+
+If there are no contexts on the stack, the current context is added to the `statements` list and a new context is generated.
+
+#### getStatements
+
+Returns the list of top level statements that have been handled.
+
+#### getContext
+
+Returns the current context
+
+#### processToken
+
+Handles the current token given the current state and context
+
+| param | description |
+| -- | -- |
+| token | The token to process |
 
 ## Types
 
