@@ -135,12 +135,17 @@ This method adds the current context to the context stack and starts over from a
 | param | description |
 | -- | -- |
 | rewind | boolean, if true the current token will be replayed after the new context is generated. Optional, defaults false |
+| childKey | string, the key to insert children under on the parent context. Optional, defaults to "children" |
 
 #### pop
 
 The `pop` method should be called when the current statement is finished and ready for processing. If there are contexts on the stack, the current context is added to the `children` array of its parent. The parent is then popped of the stack and set as the current context.
 
 If there are no contexts on the stack, the current context is added to the `statements` list and a new context is generated.
+
+| param | description |
+| -- | -- |
+| rewind | boolean, if true the current token will be replayed after the next context is determined. Optional, defaults false |
 
 #### getStatements
 

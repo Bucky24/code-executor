@@ -6,6 +6,7 @@ class StateManager {
         this.statements = [];
         this.stack = [];
         this.rewindFlag = false;
+        this.childKey = null;
     }
 
     newContext() {
@@ -15,7 +16,7 @@ class StateManager {
         };
     }
 
-    pop() {
+    pop(rewind = false) {
         const contextAsStatement = {
             state: this.context.state,
             ...this.context.data,
@@ -27,18 +28,30 @@ class StateManager {
             }
             this.newContext();
         } else {
-            const oldContext = this.context;
             this.context = this.stack.pop();
-            this.context.children = [
-                ...this.context.children || [],
-                contextAsStatement,
-            ];
+            if (this.childKey) {
+                this.context.data[this.childKey] = [
+                    ...this.context.data[this.childKey] || [],
+                    contextAsStatement,
+                ]
+            } else {
+                this.context.children = [
+                    ...this.context.children || [],
+                    contextAsStatement,
+                ];
+            }
+            this.childKey = null;
+        }
+
+        if (rewind) {
+            this.rewindFlag = true;
         }
     }
 
-    push(rewind = false) {
+    push(rewind = false, childKey = null) {
         this.stack.push(this.context);
         this.newContext();
+        this.childKey = childKey;
 
         if (rewind) {
             this.rewindFlag = true;
@@ -67,7 +80,7 @@ class StateManager {
                 for (let i=0;i<path.length-1;i++) {
                     const elem = path[i];
                     if (!cur[elem]) {
-                        throw new Error(`setData: error when processing data path ${path} at elem ${elem}: does not exist`);
+                        throw new Error(`setData: error when processing data path ${key} at elem ${elem}: does not exist`);
                     }
                     cur = cur[elem];
                 }
@@ -104,6 +117,7 @@ class StateManager {
             func = stateData;
         }
         const result = func(token, this.getContext(), this);
+
         if (!result) {
             throw new Error(`Unxpected token "${token}" at state ${this.context.state}`);
         }
