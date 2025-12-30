@@ -136,6 +136,34 @@ class StateManager {
             this.processToken(token);
         }
     }
+
+    processStatement(statement, lang) {
+        const stateData = this.states[statement.state];
+        if (!stateData) {
+            throw new Error(`Don't know how to generate state ${statement.state}`);
+        }
+        let func;
+        if (typeof stateData === 'function' && /^class\s/.test(Function.prototype.toString.call(stateData))) {
+            func = stateData.generate;
+        } else if (typeof stateData === 'function') {
+            throw new Error(`processStatement requires a class but ${statement.state} is a function`);
+        }
+
+        const textOutput = func(statement, lang, this);
+
+        return textOutput;
+    }
+
+    generate(language) {
+        const statements = this.getStatements();
+
+        const output = [];
+        for (const statement of statements) {
+            output.push(this.processStatement(statement, language));
+        }
+
+        return output;
+    }
 }
 
 module.exports = {

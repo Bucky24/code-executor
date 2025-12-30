@@ -147,6 +147,10 @@ If there are no contexts on the stack, the current context is added to the `stat
 | -- | -- |
 | rewind | boolean, if true the current token will be replayed after the next context is determined. Optional, defaults false |
 
+#### popAll
+
+Intended to be called at the end of token processing, popAll ensures that any unclosed blocks or items on the stack are processed and added to statements.
+
 #### getStatements
 
 Returns the list of top level statements that have been handled.
@@ -162,6 +166,23 @@ Handles the current token given the current state and context
 | param | description |
 | -- | -- |
 | token | The token to process |
+
+#### generate
+
+Takes the list of statements in the manager and attempts to generate code. All states must be class based for this to work, and all classes must expose a static method "generate". This method takes in three params: the statement to generate for, the language to generate, and a pointer to the manager.
+
+| param | description |
+| -- | -- |
+| language | The language to generate for |
+
+#### processStatement
+
+This method is intended to be called from inside generate methods, to be used for handling children or other nested statements.
+
+| param | description |
+| -- | -- |
+| statement | The statement to generate for |
+| language | The language to generate for |
 
 ## Types
 
