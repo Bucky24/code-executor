@@ -48,6 +48,14 @@ class StateManager {
         }
     }
 
+    popAll() {
+        while (this.stack.length > 0) {
+            this.pop();
+        }
+        // pop anything left over that's not in the stack
+        this.pop();
+    }
+
     push(rewind = false, childKey = null) {
         this.stack.push(this.context);
         this.newContext();
