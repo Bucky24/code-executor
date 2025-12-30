@@ -1,6 +1,6 @@
 # code-executor
 
-This is designed to be a somewhat lightweight way of executing a specific syntax tree. 
+This is designed to be a somewhat lightweight way of processing, executing, and transpiling programming languages
 
 ## Exports
 
@@ -109,26 +109,74 @@ The `Tokenize` method takes in a string of code and a series of "interesting" ch
 
 ### StateManager
 
-The `StateManager` can provide assistance with generating your parse tree. It provides the following methods:
+The `StateManager` can provide assistance with generating your parse tree. It is split into a few sections: 
 
-#### constructor
+#### Creation
 
-The constructor creates a new `StateManager`. It takes in the following parameters:
+Create the state manager via the `constructor`, which takes in the following parameters:
 
 | Param | Description |
 | -- | -- |
-| stateMap | A map of state to process. The value can either be a function that takes in 3 parameters. The first parameter is the current token. The second is the current state context, which includes the `state` and any data that you may have added. The third paramter is a reference to the StateManager instance. This function must return true if the token is processed. Any other response will cause an error to be thrown. This value can also be a class. The class must contain a static member called "process" which behaves as the function described above. |
+| stateMap |  |
 | initialState | The initial state to start the manager from |
 
-#### setData
+Next, initialize a language via the `registerLanguage` method:
+
+| Param | Description |
+| -- | -- |
+| language | The name of the language |
+| stateMap | A map of state to process. This value must be a class. The required functions of this class are defined in later sections. |
+| generateMap | A map from `STRUCTURE_TYPE` to generation function. The generation function takes in a `Statement` and a manager param, which is the current instance of the `StateManager` |
+| initialState | The state to start with |
+| splitTokens | A list of tokens to split code by |
+
+#### Code Parsing
+
+Code parsing is done first by setting the active language via `setCurrentLanguage`
+
+| Param | Description |
+| -- | -- |
+| language | The language to set as the current |
+
+Then the method `processCode` should be called.
+
+| Param | Description |
+| -- | -- |
+| code | The code to process |
+
+This method will perform the following steps:
+1) Use `Tokenizer` to tokenize the code, according to the `splitTokens` of the language
+2) Initialize the current state to `initialState`
+3) For each token, look up the state class for the current state, then attempt to call `processToken`. This is a static method that takes in the following arguments:
+
+| Param | Description |
+| -- | -- |
+| token | The token to process |
+| context | The current processing context |
+| manager | The current instance of the `StateManager` |
+
+This method should return true if the token has been processed correctly. Else an error is thrown.
+
+4) Once finished, these internal statements will be turned into `Statement` objects. For each internal statement, look up the state class for the state, then attempt to call `processInternal`. This is a static method that takes in the following arguments:
+
+| Param | Description |
+| -- | -- |
+| statement | The internal statement |
+| manager | The current instance of the `StateManager` |
+
+This method should return a valid `Statement`
+
+The following methods can be used by `processToken` to ensure the context is updated.
+
+##### setData
 
 This method allows changing any data field of the current context. It takes in an object, where the key is the path to what in the data should be modified (This is a dotpath which allows changing deeper objects). The value is the value to set. If the value to set is an array, and the existing value is also an array, the result will be the concatination of both arrays.
 
-#### setState
+##### setState
 
 This method changes the active state. Note that this will change the state of the current context, not create a new context (use the `push` method for creating a nested context). The second parameter of this method will also be passed into `setData` so you can set data and state in the same function.
 
-#### push
+##### push
 
 This method adds the current context to the context stack and starts over from a brand new context. Use this when entering a statement block to allow recursive statement processing.
 
@@ -137,7 +185,7 @@ This method adds the current context to the context stack and starts over from a
 | rewind | boolean, if true the current token will be replayed after the new context is generated. Optional, defaults false |
 | childKey | string, the key to insert children under on the parent context. Optional, defaults to "children" |
 
-#### pop
+##### pop
 
 The `pop` method should be called when the current statement is finished and ready for processing. If there are contexts on the stack, the current context is added to the `children` array of its parent. The parent is then popped of the stack and set as the current context.
 
@@ -147,42 +195,25 @@ If there are no contexts on the stack, the current context is added to the `stat
 | -- | -- |
 | rewind | boolean, if true the current token will be replayed after the next context is determined. Optional, defaults false |
 
-#### popAll
+#### Generation
 
-Intended to be called at the end of token processing, popAll ensures that any unclosed blocks or items on the stack are processed and added to statements.
+The `StateManager` can take in statements and convert them into any registered language. Trigger this by calling `setCurrentLanguage` then `generate`. This kicks off the following process:
 
-#### getStatements
+1) For each `Statement`, the appropriate function in the language's `generator` map is looked up, using the `STRUCTORE_TYPE` of the `Statement`
 
-Returns the list of top level statements that have been handled.
+| Param | Description |
+| statement | The `Statement` |
+| manager | The instance of the `StateManager` |
 
-#### getContext
+This should return an internal statement representing the `Statement` for this language. The manager method `generateStatement` can be called with any nested `Statement`.
 
-Returns the current context
+2) For each internal statement, look up the appropriate class for the statement state, then call `generateInternal`.
 
-#### processToken
+| Param | Description |
+| statement | The internal statement |
+| manager | The instance of the `StateManager` |
 
-Handles the current token given the current state and context
-
-| param | description |
-| -- | -- |
-| token | The token to process |
-
-#### generate
-
-Takes the list of statements in the manager and attempts to generate code. All states must be class based for this to work, and all classes must expose a static method "generate". This method takes in three params: the statement to generate for, the language to generate, and a pointer to the manager.
-
-| param | description |
-| -- | -- |
-| language | The language to generate for |
-
-#### processStatement
-
-This method is intended to be called from inside generate methods, to be used for handling children or other nested statements.
-
-| param | description |
-| -- | -- |
-| statement | The statement to generate for |
-| language | The language to generate for |
+This should return a text representation of the statement in that language's code. The manager method `generateInternalStatement` can be called with any nested internal statement to get the code for that statement.
 
 ## Types
 

@@ -1,122 +1,165 @@
 const { StateManager } = require("../src/stateManager");
+const { STRUCTURE_TYPE } = require("../src/types");
 
 describe('StateManager', () => {
-  describe('processToken', () => {
+  describe('processCode', () => {
     it('should correctly call the default state', () => {
-      const manager = new StateManager({
-        start: (token, context, manager) => {
+      class Start {
+        static processToken(token, context, manager) {
           manager.setState('stub', {
             stub: 'start_stub',
           });
           return true;
-        },
-      }, 'start');
+        }
+      }
+      class Stub {
+        static processInternal(statement) {
+          return {
+            type: STRUCTURE_TYPE.BLOCK,
+            children: [],
+          };
+        }
+      }
+      const manager = new StateManager();
+      manager.registerLanguage('lang', {
+        start: Start,
+        stub: Stub,
+      }, {}, 'start', []);
 
-      manager.processToken('');
-      manager.popAll();
+      manager.setCurrentLanguage('lang');
+      manager.processCode(' ');
       const statements = manager.getStatements();
 
       expect(statements[0]).toStrictEqual({
-        state: 'stub',
-        children: undefined,
-        stub: 'start_stub',
+        type: STRUCTURE_TYPE.BLOCK,
+        children: [],
       });
     });
 
     it('should error if current state does not handle token', () => {
-      const manager = new StateManager({
-        start: (token, context, manager) => {
+      class Start {
+        static processToken(token, context, manager) {
           // nothing
-        },
-      }, 'start');
+        }
+      }
+      const manager = new StateManager();
+      manager.registerLanguage('lang', {
+        start: Start,
+      }, {}, 'start', []);
+      manager.setCurrentLanguage('lang');
 
-      expect(() => manager.processToken('')).toThrow('Unxpected token "" at state start');
+      expect(() => manager.processCode(' ')).toThrow('Unxpected token " " at state start');
     });
-  });
 
-  describe('generate', () => {
     it('should fail if function is provided', () => {
-      const manager = new StateManager({
-        start: function() {
+      class Start {
+        static processToken(token, context, manager) {
           manager.setState('stub', {
             stub: 'start_stub',
           });
           return true;
-        },
-        stub: function() {},
-      }, 'start');
-
-      manager.processToken('');
-      manager.popAll();
-
-      expect(() => manager.generate('lang')).toThrow('processStatement requires a class but stub is a function');
-    });
-
-    it('should provide expected output', () => {
-      class StubClass {
-        static process(token, context, manager) {
-          return true;
-        }
-
-        static generate(statement, lang) {
-          expect(lang).toBe('lang');
-          return `stub_${statement.stub}`;
         }
       }
-      const manager = new StateManager({
-        start: function(token, context, manager) {
+      const manager = new StateManager();
+
+      manager.registerLanguage('lang', {
+        start: Start,
+        stub: function() {},
+      }, {}, 'start', []);
+      manager.setCurrentLanguage('lang');
+
+      expect(() => manager.processCode(' ')).toThrow('State stub/lang does not map to a class');
+    });
+  });
+
+  describe('generate', () => {
+    it('should provide expected output', () => {
+      class Start {
+        static processToken(token, context, manager) {
           manager.setState('stub', {
             stub: token,
           });
           return true;
-        },
+        }
+      }
+      class StubClass {
+        static processInternal(statement, manager) {
+          return {
+            type: STRUCTURE_TYPE.BLOCK,
+            children: [],
+          };
+        }
+
+        static generateInternal(statement, manager) {
+          return `stub_${statement.stub}`;
+        }
+      }
+      const manager = new StateManager();
+      manager.registerLanguage('lang', {
+        start: Start,
         stub: StubClass,
-      }, 'start');
+      }, {
+        [STRUCTURE_TYPE.BLOCK]: (statement, manager) => {
+          return {
+            state: 'stub',
+            stub: 'a',
+          };
+        },
+      }, 'start', []);
 
-      manager.processToken('a');
-      manager.popAll();
+      manager.setCurrentLanguage('lang');
+      manager.processCode('a');
 
-      const result = manager.generate('lang');
+      const result = manager.generate();
       expect(result[0]).toBe('stub_a');
     });
 
     it('should handle any nesting', () => {
-      class StubA {
-        static process(token, context, manager) {
-          return true;
-        }
-
-        static generate(statement, lang, manager) {
-          expect(lang).toBe('lang');
-          return `stub_${manager.processStatement({ state: 'stubb', stub: statement.stub }, lang)}`;
-        }
-      }
-
-      class StubB {
-        static process(token, context, manager) {
-          return true;
-        }
-
-        static generate(statement, lang) {
-          expect(lang).toBe('lang');
-          return statement.stub;
-        }
-      }
-      const manager = new StateManager({
-        start: function(token, context, manager) {
+      class Start {
+        static processToken(token, context, manager) {
           manager.setState('stuba', {
             stub: token,
           });
           return true;
-        },
+        }
+      }
+
+      class StubA {
+        static processInternal(statement, manager) {
+          return {
+            type: STRUCTURE_TYPE.BLOCK,
+            children: [],
+          };
+        }
+
+        static generateInternal(statement, manager) {
+          return `stub_${manager.generateInternalStatement({ state: 'stubb', stub: statement.stub })}`;
+        }
+      }
+
+      class StubB {
+        static generateInternal(statement) {
+          return statement.stub;
+        }
+      }
+      const manager = new StateManager();
+      manager.registerLanguage('lang', {
+        start: Start,
         stuba: StubA,
         stubb: StubB,
-      }, 'start');
+      }, {
+        [STRUCTURE_TYPE.BLOCK]: (statement, manager) => {
+          return {
+            state: 'stuba',
+            stub: 'a',
+          };
+        }
+      }, 'start', []);
 
-      manager.processToken('a');
-      manager.popAll();
+      manager.setCurrentLanguage('lang');
+      manager.processCode('a');
 
-      const result = manager.generate('lang');
+      const result = manager.generate();
       expect(result[0]).toBe('stub_a');
     });
   });

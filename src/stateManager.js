@@ -1,30 +1,51 @@
+const { Tokenize } = require("./tokenizer");
+
 class StateManager {
-    constructor(states, initialState) {
-        this.states = states;
-        this.initialState = initialState;
-        this.newContext();
+    constructor() {
+        this.languages = {};
+        this.internalStatements = [];
         this.statements = [];
         this.stack = [];
         this.rewindFlag = false;
         this.childKey = null;
+        this.currentLanguage = null;
+    }
+
+    registerLanguage(language, states, generators, initialState, splitTokens) {
+        this.languages[language] = {
+            states,
+            generators,
+            initialState,
+            splitTokens,
+        };
+    }
+
+    getCurrentLanguage() {
+        return this.languages[this.currentLanguage];
+    }
+
+    setCurrentLanguage(language) {
+        this.currentLanguage = language;
     }
 
     newContext() {
+        const language = this.getCurrentLanguage();
         this.context = {
-            state: this.initialState,
+            state: language.initialState,
             data: {},
         };
     }
 
     pop(rewind = false) {
+        const language = this.getCurrentLanguage();
         const contextAsStatement = {
             state: this.context.state,
             ...this.context.data,
             children: this.context.children,
         };
         if (this.stack.length === 0) {
-            if (this.context.state !== this.initialState) {
-                this.statements.push(contextAsStatement);
+            if (this.context.state !== language.initialState) {
+                this.internalStatements.push(contextAsStatement);
             }
             this.newContext();
         } else {
@@ -113,21 +134,32 @@ class StateManager {
         return this.statements;
     }
 
-    processToken(token) {
-        const stateData = this.states[this.context.state];
+    getInternalStatements() {
+        return this.internalStatements;
+    }
+
+    getClassMethod(state, method) {
+        const language = this.getCurrentLanguage();
+        const stateData = language.states[state];
         if (!stateData) {
-            throw new Error(`Don't know how to process state ${this.context.state}`);
+            throw new Error(`Don't know how to handle state ${state}/${this.currentLanguage}`);
         }
-        let func;
         if (typeof stateData === 'function' && /^class\s/.test(Function.prototype.toString.call(stateData))) {
-            func = stateData.process;
-        } else if (typeof stateData === 'function') {
-            func = stateData;
+            if (!stateData[method]) {
+                throw new Error(`State ${state}/${this.currentLanguage} does not expose static method "${method}"`);
+            }
+            return stateData[method];
         }
+
+        throw new Error(`State ${state}/${this.currentLanguage} does not map to a class`);
+    }
+
+    processToken(token) {
+        const func = this.getClassMethod(this.context.state, 'processToken');
         const result = func(token, this.getContext(), this);
 
         if (!result) {
-            throw new Error(`Unxpected token "${token}" at state ${this.context.state}`);
+            throw new Error(`Unxpected token "${token}" at state ${this.context.state}/${this.currentLanguage}`);
         }
 
         if (this.rewindFlag) {
@@ -137,29 +169,61 @@ class StateManager {
         }
     }
 
-    processStatement(statement, lang) {
-        const stateData = this.states[statement.state];
-        if (!stateData) {
-            throw new Error(`Don't know how to generate state ${statement.state}`);
-        }
-        let func;
-        if (typeof stateData === 'function' && /^class\s/.test(Function.prototype.toString.call(stateData))) {
-            func = stateData.generate;
-        } else if (typeof stateData === 'function') {
-            throw new Error(`processStatement requires a class but ${statement.state} is a function`);
+    processInternalStatement(statement) {
+        const func = this.getClassMethod(statement.state, 'processInternal');
+        const result = func(statement, this);
+
+        return result;
+    }
+
+    processCode(code) {
+        const language = this.getCurrentLanguage();
+        const tokens = Tokenize(code, language.splitTokens);
+        this.newContext();
+        this.internalStatements = [];
+
+        for (const token of tokens) {
+            this.processToken(token);
         }
 
-        const textOutput = func(statement, lang, this);
+        this.popAll();
+
+        // now go through statements and convert them 
+        for (const statement of this.getInternalStatements()) {
+            this.statements.push(this.processInternalStatement(statement));
+        }
+    }
+
+    generateStatement(statement) {
+        const language = this.getCurrentLanguage();
+        const generator = language.generators[statement.type];
+        if (!generator) {
+            throw new Error(`Don't know how to generate type ${statement.type}/${this.currentLanguage}`);
+        }
+
+        const textOutput = generator(statement, this);
 
         return textOutput;
     }
 
-    generate(language) {
-        const statements = this.getStatements();
+    generateInternalStatement(statement) {
+        const func = this.getClassMethod(statement.state, 'generateInternal');
+        const result = func(statement, this);
 
-        const output = [];
+        return result;
+    }
+
+    generate() {
+        const statements = this.getStatements();
+        const internal = [];
         for (const statement of statements) {
-            output.push(this.processStatement(statement, language));
+            internal.push(this.generateStatement(statement));
+        }
+
+        // now we have our statements in internal statement mode, convert to text
+        const output = [];
+        for (const statement of internal) {
+            output.push(this.generateInternalStatement(statement));
         }
 
         return output;
