@@ -164,7 +164,7 @@ This method should return true if the token has been processed correctly. Else a
 | statement | The internal statement |
 | manager | The current instance of the `StateManager` |
 
-This method should return a valid `Statement`
+This method should return a valid `Statement`. You can call the `processInternalStatement` method with any child statements.
 
 The following methods can be used by `processToken` to ensure the context is updated.
 
@@ -210,6 +210,7 @@ This should return an internal statement representing the `Statement` for this l
 2) For each internal statement, look up the appropriate class for the statement state, then call `generateInternal`.
 
 | Param | Description |
+| -- | -- |
 | statement | The internal statement |
 | manager | The instance of the `StateManager` |
 
