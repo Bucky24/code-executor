@@ -154,8 +154,15 @@ class StateManager {
         throw new Error(`State ${state}/${this.currentLanguage} does not map to a class`);
     }
 
-    processToken(token) {
+    processToken(token, debug) {
         const func = this.getClassMethod(this.context.state, 'processToken');
+        if (debug) {
+            const context = this.getContext();
+            if (debug === 1) {
+                delete context.children;
+            }
+            console.log(`Processing token ${token} with context ${JSON.stringify(context, null, 4)}`);
+        }
         const result = func(token, this.getContext(), this);
 
         if (!result) {
@@ -165,7 +172,7 @@ class StateManager {
         if (this.rewindFlag) {
             // replay this token
             this.rewindFlag = false;
-            this.processToken(token);
+            this.processToken(token, debug);
         }
     }
 
@@ -176,14 +183,14 @@ class StateManager {
         return result;
     }
 
-    processCode(code) {
+    processCode(code, debug = false) {
         const language = this.getCurrentLanguage();
         const tokens = Tokenize(code, language.splitTokens);
         this.newContext();
         this.internalStatements = [];
 
         for (const token of tokens) {
-            this.processToken(token);
+            this.processToken(token, debug);
         }
 
         this.popAll();

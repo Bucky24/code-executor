@@ -143,6 +143,7 @@ Then the method `processCode` should be called.
 | Param | Description |
 | -- | -- |
 | code | The code to process |
+| debug | If set, will print out debug information. Can be a true value or a level. Level 1 prints the context without children (which can be large). Level 2 prints the full context. |
 
 This method will perform the following steps:
 1) Use `Tokenizer` to tokenize the code, according to the `splitTokens` of the language
