@@ -143,6 +143,7 @@ Then the method `processCode` should be called.
 | Param | Description |
 | -- | -- |
 | code | The code to process |
+| debug | If set, will print out debug information. Can be a true value or a level. Level 1 prints the context without children (which can be large). Level 2 prints the full context. |
 
 This method will perform the following steps:
 1) Use `Tokenizer` to tokenize the code, according to the `splitTokens` of the language
@@ -164,7 +165,7 @@ This method should return true if the token has been processed correctly. Else a
 | statement | The internal statement |
 | manager | The current instance of the `StateManager` |
 
-This method should return a valid `Statement`
+This method should return a valid `Statement`. You can call the `processInternalStatement` method with any child statements.
 
 The following methods can be used by `processToken` to ensure the context is updated.
 
@@ -214,6 +215,7 @@ This should return an internal statement representing the `Statement` for this l
 2) For each internal statement, look up the appropriate class for the statement state, then call `generateInternal`.
 
 | Param | Description |
+| -- | -- |
 | statement | The internal statement |
 | manager | The instance of the `StateManager` |
 
