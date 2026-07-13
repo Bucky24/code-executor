@@ -197,7 +197,11 @@ If there are no contexts on the stack, the current context is added to the `stat
 
 #### Generation
 
-The `StateManager` can take in statements and convert them into any registered language. Trigger this by calling `setCurrentLanguage` then `generate`. This kicks off the following process:
+The `StateManager` can take in statements and convert them into any registered language.
+
+*NOTE:* This is intended to provide the ability for you to write your own lightweight generation between languages. However if you wish to transpile into a standard language like JavaScript, it's recommended to use the `Generator` system instead.
+
+Trigger this by calling `setCurrentLanguage` then `generate`. This kicks off the following process:
 
 1) For each `Statement`, the appropriate function in the language's `generator` map is looked up, using the `STRUCTORE_TYPE` of the `Statement`
 
