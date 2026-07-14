@@ -1,6 +1,9 @@
-const { STRUCTURE_TYPE, COMPARISON_OPERATOR } = require("../types");
+const { STRUCTURE_TYPE, COMPARISON_OPERATOR, MATH_OPERATOR } = require("../types");
 const Generator = require("./generator");
 
+const DEFAULT_CONTEXT = {
+  vars: [],
+};
 class JavascriptGenerator extends Generator {
   static generate(code, globalContext) {
     if (!Array.isArray(code)) {
@@ -29,15 +32,25 @@ class JavascriptGenerator extends Generator {
     return (globals.length > 0 ? globals.join('\n') + '\n' : '') + generatedCode;
   }
 
-  static processStatements(code) {
-    return code.map(JavascriptGenerator.processStatement).map((statement) => `${statement};`).join("\n");
+  static processStatements(code, indent = 0, context) {
+    if (!context) context = structuredClone(DEFAULT_CONTEXT);
+    const indentString = "\t".repeat(indent);
+    return code.map((line) => JavascriptGenerator.processStatement(line, indent, context)).map((statement) => `${indentString}${statement};`).join("\n");
   }
 
-  static processStatement(statement) {
+  static processStatement(statement, indent, context) {
     if (statement.type === STRUCTURE_TYPE.ASSIGNMENT) {
-      const left = JavascriptGenerator.processStatement(statement.left);
-      const right = JavascriptGenerator.processStatement(statement.right);
-      return `let ${left} = ${right}`;
+      const left = JavascriptGenerator.processStatement(statement.left, indent, context);
+      const right = JavascriptGenerator.processStatement(statement.right, indent, context);
+      let showLet = true;
+      if (statement.left.type === STRUCTURE_TYPE.VARIABLE) {
+        if (context.vars.includes(left)) {
+          showLet = false;
+        } else {
+          context.vars.push(left);
+        }
+      }
+      return `${showLet ? 'let ' : ''}${left} = ${right}`;
     } else if (statement.type === STRUCTURE_TYPE.VARIABLE) {
       return statement.name;
     } else if (statement.type === STRUCTURE_TYPE.NUMBER) {
@@ -45,14 +58,12 @@ class JavascriptGenerator extends Generator {
     } else if (statement.type === STRUCTURE_TYPE.STRING) {
       return `"${statement.value}\"`;
     } else if (statement.type === STRUCTURE_TYPE.FUNCTION_CALL) {
-      const argStrings = statement.arguments.map(JavascriptGenerator.processStatement).join(",");
+      const argStrings = statement.arguments.map(JavascriptGenerator.processStatement, indent, context).join(",");
       return `${statement.name}(${argStrings})`;
     } else if (statement.type === STRUCTURE_TYPE.COMPARISON) {
-      const left = JavascriptGenerator.processStatement(statement.left);
-      const right = JavascriptGenerator.processStatement(statement.right);
+      const left = JavascriptGenerator.processStatement(statement.left, indent, context);
+      const right = JavascriptGenerator.processStatement(statement.right, indent, context);
       let operator;
-
-      console.log(statement);
 
       switch (statement.operator) {
         case COMPARISON_OPERATOR.NOT_EQUAL:
@@ -74,10 +85,85 @@ class JavascriptGenerator extends Generator {
           operator = "<=";
           break;
         default:
-          throw new Error(`Unexpected comparison operator ${statement.operator}`);
+          throw new Error(`Unexpected comparison operator ${statement.operator, indent, context}`);
       }
 
       return `${left} ${operator} ${right}`;
+    } else if (statement.type === STRUCTURE_TYPE.CONDITIONAL) {
+      return `if (${JavascriptGenerator.processStatement(statement.condition, indent, context)}) {\n${JavascriptGenerator.processStatements(statement.children, indent + 1, structuredClone(context))}\n}`;
+    } else if (statement.type === STRUCTURE_TYPE.CONDITIONAL_GROUP) {
+      let allChildCode = "";
+      for (let i=0;i<statement.children.length;i++) {
+        const child = statement.children[i];
+        const first = i === 0;
+        const childCode = JavascriptGenerator.processStatement(child, indent, context);
+        if (first) allChildCode += childCode;
+        else allChildCode += ` else ${childCode}`;
+      }
+
+      if (statement.finally) {
+        allChildCode += ` else {\n${JavascriptGenerator.processStatements([statement.finally], indent + 1, context)}\n}`
+      }
+
+      return allChildCode;
+    } else if (statement.type === STRUCTURE_TYPE.FUNCTION) {
+      const paramList = statement.parameters.map(JavascriptGenerator.processStatement).join(", ");
+      const childCode = JavascriptGenerator.processStatements(statement.children, indent + 1, structuredClone(context));
+      if (statement.name) {
+        return `function ${statement.name}(${paramList}) {\n${childCode}\n}`;
+      }
+      return `function(${paramList}) {\n${childCode}\n}`;
+    } else if (statement.type === STRUCTURE_TYPE.RETURN) {
+      if (statement.children.length === 0) {
+        return `return`;
+      }
+      return `return ${JavascriptGenerator.processStatement(statement.children[0], indent, context)}`
+    } else if (statement.type === STRUCTURE_TYPE.BLOCK) {
+      return `{\n${JavascriptGenerator.processStatements(statement.children, indent + 1, structuredClone(context))}\n}`;
+    } else if (statement.type === STRUCTURE_TYPE.LOOP) {
+      const childContext = structuredClone(context);
+      const preCode = statement.pre ? JavascriptGenerator.processStatement(statement.pre, indent, childContext) : '';
+      const postCode = statement.post ? JavascriptGenerator.processStatement(statement.post, indent, childContext) : '';
+      return `for (${preCode};${JavascriptGenerator.processStatement(statement.condition, indent, childContext)};${postCode}) {\n${JavascriptGenerator.processStatements(statement.children, indent + 1, childContext)}\n}`;
+    } else if (statement.type === STRUCTURE_TYPE.MATH) {
+      const left = JavascriptGenerator.processStatement(statement.left, indent, context);
+      const right = JavascriptGenerator.processStatement(statement.right, indent, context);
+
+      let operator;
+      switch (statement.operator) {
+        case MATH_OPERATOR.ADD:
+          operator = '+';
+          break;
+        case MATH_OPERATOR.SUBTRACT:
+          operator = "-";
+          break;
+        case MATH_OPERATOR.DIVIDE:
+          operator = "/";
+          break;
+        case MATH_OPERATOR.MULTIPLY:
+          operator = "*";
+          break;
+        case MATH_OPERATOR.MODULO:
+          operator= "%";
+          break;
+        default:
+          throw new Error(`Unknown math operator ${statement.operator}`);
+      }
+      
+      return `${left} ${operator} ${right}`;
+    } else if (statement.type === STRUCTURE_TYPE.OBJECT) {
+      const childLines = [];
+      const indentString = "\t".repeat(indent);
+      for (const key in statement.properties) {
+        const value = statement.properties[key];
+        childLines.push(`${indentString}\t${key}: ${JavascriptGenerator.processStatement(value, indent+1, context)},`);
+      }
+      
+      return `{\n${childLines.join('\n')}\n${indentString}}`;
+    } else if (statement.type === STRUCTURE_TYPE.PATH) {
+      const left = JavascriptGenerator.processStatement(statement.left, indent, context);
+
+      return `${left}.${statement.path.join(".")}`;
     } else {
       console.log(statement);
       throw new Error(`Unexpected structure type ${statement.type}`);

@@ -98,6 +98,14 @@ Operators for use in math statments
 | OBJECT | A hashmap with object data |
 | RETURN_VALUE | A special datatype that indicates a value generated from a `RETURN` statement. Should usually be bubbled up the stack to be returned from a function |
 
+### LANG
+
+A language selector used for `generate`
+
+| type | description |
+| -- | -- |
+| JAVASCRIPT | The JavaScript language |
+
 ### Tokenize
 
 The `Tokenize` method takes in a string of code and a series of "interesting" characters. It returns the code tokenized and broken apart by these characters.
@@ -220,6 +228,21 @@ This should return an internal statement representing the `Statement` for this l
 | manager | The instance of the `StateManager` |
 
 This should return a text representation of the statement in that language's code. The manager method `generateInternalStatement` can be called with any nested internal statement to get the code for that statement.
+
+### generate
+
+The `generate` method allows converting your geneated `Statements` into a pre-defined language. This is similar to the `Generation` for `StateManager`, but these languages are already fleshed out for you.
+
+| Param | Description |
+| -- | -- |
+| language | The language to generate. One of `LANG` |
+| code | The list of `Statments` to generate |
+| context | Similar to the global context for the `Executor`. Basically a key/value pair of global functions to provide. |
+| directory | The directory to put generated code. Code will show up in the `main` file, with extension depending on your language |
+
+```
+await generate(LANG.JAVASCRIPT, code, {}, '/path/to/dist');
+```
 
 ## Types
 

@@ -170,43 +170,21 @@ describe('JavaScript Generation', () => {
         expect(codeString).toBe('let foo = 1;\nfoo == foo;');
       });
     });
-
-    return;
     
-    describe('conditionals', () => {
-      it('should execute the children if the condition is true', async () => {
-        const code =[
-          { type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(1), operator: COMPARISON_OPERATOR.EQUAL }, children: [{ type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [] }] },
-        ];
-        let called = false;
-        const context = { foo: () => {
-          called = true;
-        }};
-      });
+    it('should show a conditional', async () => {
+      const code =[
+        { type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(1), operator: COMPARISON_OPERATOR.EQUAL }, children: [{ type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [] }] },
+      ];
+
+      await generate(LANG.JAVASCRIPT, code, {}, 'path');
       
-      it('should not execute the children if the condition is false', async () => {
-        const code = [
-          { type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(2), right: number(1), operator: COMPARISON_OPERATOR.EQUAL }, children: [{ type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [] }] },
-        ];
-        let called = false;
-        const context = { foo: () => {
-          called = true;
-        }};
-      });
+      const codeString = getCode();
       
-      it('should pass through return value and not execute further children', async () => {
-        const code = [
-          { type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(1), operator: COMPARISON_OPERATOR.EQUAL }, children: [{ type: STRUCTURE_TYPE.RETURN, children: [number(5)] }, { type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [] }] },
-        ];
-        let called = false;
-        const context = { foo: () => {
-          called = true;
-        }};
-      });
+      expect(codeString).toBe('if (1 == 1) {\n\tfoo();\n};');
     });
     
     describe('conditional group', () => {
-      it('should execute the first child that matches', async () => {
+      it('should show a group', async () => {
         const code = [
           {
             type: STRUCTURE_TYPE.CONDITIONAL_GROUP,
@@ -216,41 +194,15 @@ describe('JavaScript Generation', () => {
             ],
           },
         ];
-        let calledFoo = false;
-        let calledBar = false;
-        const context = {
-          foo: () => {
-            calledFoo = true;
-          },
-          bar: () => {
-            calledBar = true;
-          },
-        };
+
+        await generate(LANG.JAVASCRIPT, code, {}, 'path');
+        
+        const codeString = getCode();
+        
+        expect(codeString).toBe('if (1 == 1) {\n\tfoo();\n} else if (2 == 1) {\n\tbar();\n};');
       });
       
-      it('should execute the first child that matches even if it not the first child', async () => {
-        const code = [
-          {
-            type: STRUCTURE_TYPE.CONDITIONAL_GROUP,
-            children: [
-              conditional(comparison(number(2), number(1), COMPARISON_OPERATOR.EQUAL), [callFunction('foo', [])]),
-              conditional(comparison(number(1), number(1), COMPARISON_OPERATOR.EQUAL), [callFunction('bar', [])]),
-            ],
-          },
-        ];
-        let calledFoo = false;
-        let calledBar = false;
-        const context = {
-          foo: () => {
-            calledFoo = true;
-          },
-          bar: () => {
-            calledBar = true;
-          },
-        };
-      });
-      
-      it('should execute finally if any children match', async () => {
+      it('should handle finally', async () => {
         const code = [
           {
             type: STRUCTURE_TYPE.CONDITIONAL_GROUP,
@@ -260,104 +212,67 @@ describe('JavaScript Generation', () => {
             finally: callFunction('bar', []),
           },
         ];
-        let calledFoo = false;
-        let calledBar = false;
-        const context = {
-          foo: () => {
-            calledFoo = true;
-          },
-          bar: () => {
-            calledBar = true;
-          },
-        };
-      });
+
+        await generate(LANG.JAVASCRIPT, code, {}, 'path');
       
-      it('should execute finally if no children match', async () => {
-        const code = [
-          {
-            type: STRUCTURE_TYPE.CONDITIONAL_GROUP,
-            children: [
-              conditional(comparison(number(2), number(1), COMPARISON_OPERATOR.EQUAL), [callFunction('foo', [])]),
-            ],
-            finally: callFunction('bar', []),
-          },
-        ];
-        let calledFoo = false;
-        let calledBar = false;
-        const context = {
-          foo: () => {
-            calledFoo = true;
-          },
-          bar: () => {
-            calledBar = true;
-          },
-        };
-      });
-      
-      it('should return immediately if return value detected and not execute finally', async () => {
-        const code = [
-          {
-            type: STRUCTURE_TYPE.CONDITIONAL_GROUP,
-            children: [
-              conditional(comparison(number(1), number(1), COMPARISON_OPERATOR.EQUAL), [returnFn(number(5)),callFunction('foo', [])]),
-              conditional(comparison(number(1), number(1), COMPARISON_OPERATOR.EQUAL), [callFunction('foo', [])]),
-            ],
-            finally: callFunction('bar', []),
-          },
-        ];
-        let calledFoo = false;
-        let calledBar = false;
-        const context = {
-          foo: () => {
-            calledFoo = true;
-          },
-          bar: () => {
-            calledBar = true;
-          },
-        };
+        const codeString = getCode();
+        
+        expect(codeString).toBe('if (1 == 1) {\n\tfoo();\n} else {\n\tbar();\n};');
       });
     });
     
     it('should be able to assign a function', async () => {
       const code = { type: STRUCTURE_TYPE.ASSIGNMENT, left: variable('foo'), right: { type: STRUCTURE_TYPE.FUNCTION, parameters: [], children: [] }};
+
+      await generate(LANG.JAVASCRIPT, code, {}, 'path');
+      
+      const codeString = getCode();
+        
+      expect(codeString).toBe('let foo = function() {\n\n};');
     });
     
     it('should be able to create a function', async () => {
       const code = { type: STRUCTURE_TYPE.FUNCTION, parameters: [], children: [], name: 'foo' };
-    });
+
+      await generate(LANG.JAVASCRIPT, code, {}, 'path');
     
-    describe('internal function calls', () => {
-      it('should be able to call an internal function', async () => {
-        const code = [
-          assign('myvar', number(2)),
-          createFunction('foo', [], [assign('myvar', number(3))]),
-          callFunction('foo', []),
-        ];
-      });
+      const codeString = getCode();
       
-      it('should be able to handle arguments into an internal function', async () => {
-        const code = [
-          assign('myvar', number(2)),
-          createFunction('foo', [variable('arg')], [assign('myvar', variable('arg'))]),
-          callFunction('foo', [number(1)]),
-        ];
-      });
+      expect(codeString).toBe('function foo() {\n\n};');
+    });
+
+    it('should create a function with paramters', async () => {
+      const code = { type: STRUCTURE_TYPE.FUNCTION, parameters: [variable('foo'), variable('bar')], children: [], name: 'foo' };
+
+      await generate(LANG.JAVASCRIPT, code, {}, 'path');
+    
+      const codeString = getCode();
       
-      it('should be able to call a function that is defined after the call site', async () => {
-        const code = [
-          assign('myvar', number(2)),
-          callFunction('foo', [number(1)]),
-          createFunction('foo', [variable('arg')], [assign('myvar', variable('arg'))]),
-        ];
-      });
+      expect(codeString).toBe('function foo(foo, bar) {\n\n};');
+    });
+
+    it('should handle a function with a body', async () => {
+      const code = { type: STRUCTURE_TYPE.FUNCTION, parameters: [], children: [assign('foo', number(1))], name: 'foo' };
+
+      await generate(LANG.JAVASCRIPT, code, {}, 'path');
+    
+      const codeString = getCode();
       
-      it('should handle the return value of an internal function', async () => {
-        const code = [
-          assign('myvar', number(2)),
-          createFunction('foo', [], [returnFn(number(3))]),
-          assign('myvar', callFunction('foo', [])),
-        ];
-      });
+      expect(codeString).toBe('function foo() {\n\tlet foo = 1;\n};');
+    });
+
+    it('should handle the return value of an internal function', async () => {
+      const code = [
+        assign('myvar', number(2)),
+        createFunction('foo', [], [returnFn(number(3))]),
+        assign('myvar', callFunction('foo', [])),
+      ];
+
+      await generate(LANG.JAVASCRIPT, code, {}, 'path');
+    
+      const codeString = getCode();
+      
+      expect(codeString).toBe('let myvar = 2;\nfunction foo() {\n\treturn 3;\n};\nmyvar = foo();');
     });
     
     describe('block', () => {
@@ -366,24 +281,30 @@ describe('JavaScript Generation', () => {
           assign('myvar', number(2)),
           { type: STRUCTURE_TYPE.BLOCK, children: [assign('myvar', number(3)),]}
         ];
-      });
+
+        await generate(LANG.JAVASCRIPT, code, {}, 'path');
       
-      it('should pass a return value through', async () => {
-        const code = [
-          { type: STRUCTURE_TYPE.BLOCK, children: [returnFn(number(3)),]}
-        ];
+        const codeString = getCode();
+        
+        expect(codeString).toBe('let myvar = 2;\n{\n\tmyvar = 3;\n};');
       });
     });
     
     describe('loops', () => {
-      it('should execute a loop for as long as the condition is true', async () => {
+      it('should show a loop', async () => {
         const code = [
           assign('myvar', number(0)),
           { type: STRUCTURE_TYPE.LOOP, condition: comparison(variable('myvar'), number(3), COMPARISON_OPERATOR.LESS_THAN), children: [assign('myvar', math(variable('myvar'), number(1), MATH_OPERATOR.ADD))] },
         ];
+
+        await generate(LANG.JAVASCRIPT, code, {}, 'path');
+    
+        const codeString = getCode();
+      
+        expect(codeString).toBe('let myvar = 0;\nfor (;myvar < 3;) {\n\tmyvar = myvar + 1;\n};');
       });
       
-      it('should execute the pre condition', async () => {
+      it('should show a loop precondition', async () => {
         const code = [
           assign('myvar', number(0)),
           { type: STRUCTURE_TYPE.LOOP, pre: assign('loop', number(0)), condition: comparison(variable('loop'), number(3), COMPARISON_OPERATOR.LESS_THAN), children: [
@@ -391,20 +312,24 @@ describe('JavaScript Generation', () => {
             assign('myvar', variable('loop')),
           ] },
         ];
+        await generate(LANG.JAVASCRIPT, code, {}, 'path');
+    
+        const codeString = getCode();
+      
+        expect(codeString).toBe('let myvar = 0;\nfor (let loop = 0;loop < 3;) {\n\tloop = loop + 1;\n\tmyvar = loop;\n};');
       });
       
-      it('should execute the post condition', async () => {
+      it('should show a loop post condition', async () => {
         const code = [
           assign('myvar', number(0)),
           { type: STRUCTURE_TYPE.LOOP, pre: assign('loop', number(0)), condition: comparison(variable('loop'), number(3), COMPARISON_OPERATOR.LESS_THAN), post: assign('loop', math(variable('loop'), number(1), MATH_OPERATOR.ADD)), children: [assign('myvar', variable('loop'))] },
         ];
-      });
+
+        await generate(LANG.JAVASCRIPT, code, {}, 'path');
+    
+        const codeString = getCode();
       
-      it('should pass though return value and quit loop when returning', async () => {
-        const code = [
-          assign('myvar', number(0)),
-          { type: STRUCTURE_TYPE.LOOP, condition: comparison(variable('myvar'), number(3), COMPARISON_OPERATOR.LESS_THAN), children: [assign('myvar', math(variable('myvar'), number(1), MATH_OPERATOR.ADD)), conditional(comparison(variable('myvar'), number(1), COMPARISON_OPERATOR.GREATER_THAN_OR_EQUAL),[returnFn(number(5))])] },
-        ];
+        expect(codeString).toBe('let myvar = 0;\nfor (let loop = 0;loop < 3;loop = loop + 1) {\n\tmyvar = loop;\n};');
       });
     });
     
@@ -413,30 +338,60 @@ describe('JavaScript Generation', () => {
         const code = [
           assign('myvar', math(number(1), number(2), MATH_OPERATOR.ADD)),
         ];
+
+        await generate(LANG.JAVASCRIPT, code, {}, 'path');
+    
+        const codeString = getCode();
+      
+        expect(codeString).toBe('let myvar = 1 + 2;');
       });
       
       it('should be able to subtract two numbers', async () => {
         const code = [
           assign('myvar', math(number(1), number(2), MATH_OPERATOR.SUBTRACT)),
         ];
+
+        await generate(LANG.JAVASCRIPT, code, {}, 'path');
+    
+        const codeString = getCode();
+      
+        expect(codeString).toBe('let myvar = 1 - 2;');
       });
       
       it('should be able to multiply two numbers', async () => {
         const code = [
           assign('myvar', math(number(2), number(2), MATH_OPERATOR.MULTIPLY)),
         ];
+
+        await generate(LANG.JAVASCRIPT, code, {}, 'path');
+    
+        const codeString = getCode();
+      
+        expect(codeString).toBe('let myvar = 2 * 2;');
       });
       
       it('should be able to divide two numbers', async () => {
         const code = [
           assign('myvar', math(number(4), number(2), MATH_OPERATOR.DIVIDE)),
         ];
+
+        await generate(LANG.JAVASCRIPT, code, {}, 'path');
+    
+        const codeString = getCode();
+      
+        expect(codeString).toBe('let myvar = 4 / 2;');
       });
       
       it('should be able to modulo two numbers', async () => {
         const code = [
           assign('myvar', math(number(5), number(2), MATH_OPERATOR.MODULO)),
         ];
+
+        await generate(LANG.JAVASCRIPT, code, {}, 'path');
+    
+        const codeString = getCode();
+      
+        expect(codeString).toBe('let myvar = 5 % 2;');
       });
     });
     
@@ -444,6 +399,12 @@ describe('JavaScript Generation', () => {
       const code = [
         assign('myvar', { type: STRUCTURE_TYPE.OBJECT, properties: { foo: number(2) }}),
       ];
+
+      await generate(LANG.JAVASCRIPT, code, {}, 'path');
+  
+      const codeString = getCode();
+    
+      expect(codeString).toBe('let myvar = {\n\tfoo: 2,\n};');
     });
     
     describe('paths', () => {
@@ -452,13 +413,12 @@ describe('JavaScript Generation', () => {
           assign('myvar', { type: STRUCTURE_TYPE.OBJECT, properties: { foo: number(2) }}),
           { type: STRUCTURE_TYPE.PATH, path: ['foo'], left: variable('myvar') },
         ];
-      });
+
+        await generate(LANG.JAVASCRIPT, code, {}, 'path');
+    
+        const codeString = getCode();
       
-      it('should error if the path is invalid', async () => {
-        const code = [
-          assign('myvar', { type: STRUCTURE_TYPE.OBJECT, properties: { foo: number(2) }}),
-          { type: STRUCTURE_TYPE.PATH, path: ['bar'], left: variable('myvar') },
-        ];
+        expect(codeString).toBe('let myvar = {\n\tfoo: 2,\n};\nmyvar.foo;');
       });
       
       it('should nest more than one level', async () => {
@@ -466,6 +426,12 @@ describe('JavaScript Generation', () => {
           assign('myvar', { type: STRUCTURE_TYPE.OBJECT, properties: { foo: { type: STRUCTURE_TYPE.OBJECT, properties: { bar: number(2) } } }}),
           { type: STRUCTURE_TYPE.PATH, path: ['foo', 'bar'], left: variable('myvar') },
         ];
+
+        await generate(LANG.JAVASCRIPT, code, {}, 'path');
+    
+        const codeString = getCode();
+      
+        expect(codeString).toBe('let myvar = {\n\tfoo: {\n\t\tbar: 2,\n\t},\n};\nmyvar.foo.bar;');
       });
     });
   });
