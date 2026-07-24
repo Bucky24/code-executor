@@ -164,6 +164,8 @@ class JavascriptGenerator extends Generator {
       const left = JavascriptGenerator.processStatement(statement.left, indent, context);
 
       return `${left}.${statement.path.join(".")}`;
+    } else if (statement.type === STRUCTURE_TYPE.CLASS) {
+      return `class ${statement.name} {\n${JavascriptGenerator.processStatements(statement.children, indent+1, context)}`;
     } else {
       console.log(statement);
       throw new Error(`Unexpected structure type ${statement.type}`);
