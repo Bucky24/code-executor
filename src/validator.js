@@ -17,7 +17,7 @@ function validate(structure, path = ['top']) {
     try {
         if (Array.isArray(structure)) {
             for (let i=0;i<structure.length;i++) {
-                validate(structure[i], [...path, i]);
+                validate(structure[i], [...path, `${structure[i].type}(${i})`]);
             }
             return;
         }
@@ -89,6 +89,8 @@ function validate(structure, path = ['top']) {
         } else if (structure.type === STRUCTURE_TYPE.CLASS) {
             checkForKeys(structure, ['name', 'children']);
             validate(structure.children, [...path, 'children']);
+        } else if (structure.type === STRUCTURE_TYPE.COMMENT) {
+            checkForKeys(structure, ['comment']);
         } else {
             throw new Error(`Unknown structure type: ${structure.type}`);
         }

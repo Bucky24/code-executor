@@ -401,6 +401,8 @@ class Executor {
                 ...data,
                 name: className,
             };
+        } else if (node.type === STRUCTURE_TYPE.COMMENT) {
+            // no-op
         } else {
             throw new Error(`Unknown node type: ${node.type}`);
         }

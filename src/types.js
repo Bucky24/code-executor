@@ -16,6 +16,7 @@ const STRUCTURE_TYPE = {
     NOOP: "noop",
     RETURN: "return",
     CLASS: "class",
+    COMMENT: "comment",
 };
 
 const COMPARISON_OPERATOR = {

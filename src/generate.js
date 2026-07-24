@@ -1,6 +1,7 @@
 const JavascriptGenerator = require("./generators/javascript");
 const fs = require("fs");
 const path = require("path");
+const { validate } = require("./validator");
 
 const LANG = {
   JAVASCRIPT: 'lang/javascript',
@@ -23,16 +24,19 @@ function getGenerator(lang) {
 
 module.exports = {
   LANG,
-  generate: async (lang, code, globalContext, outputDir) => {
+  generate: async (lang, tree, globalContext, outputDir) => {
     const generator = getGenerator(lang);
+
+    // validate the tree
+    validate(tree);
 
     // ensure the directory exists and is clean
     if (fs.existsSync(outputDir)) {
-      fs.rmdirSync(outputDir, { recursive: true });
+      fs.rmSync(outputDir, { recursive: true });
     }
     fs.mkdirSync(outputDir, { recursive: true });
 
-    const outputCode = await generator.generate(code, globalContext);
+    const outputCode = await generator.generate(tree, globalContext);
 
     fs.writeFileSync(path.join(outputDir, generator.getFile("main")), outputCode);
   },

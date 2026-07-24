@@ -4,6 +4,12 @@ const Generator = require("./generator");
 const DEFAULT_CONTEXT = {
   vars: [],
 };
+
+const PARENT = {
+  NONE: 'none',
+  CLASS: 'class',
+};
+
 class JavascriptGenerator extends Generator {
   static generate(code, globalContext) {
     if (!Array.isArray(code)) {
@@ -32,13 +38,13 @@ class JavascriptGenerator extends Generator {
     return (globals.length > 0 ? globals.join('\n') + '\n' : '') + generatedCode;
   }
 
-  static processStatements(code, indent = 0, context) {
+  static processStatements(code, indent = 0, context, parent = PARENT.NONE) {
     if (!context) context = structuredClone(DEFAULT_CONTEXT);
     const indentString = "\t".repeat(indent);
-    return code.map((line) => JavascriptGenerator.processStatement(line, indent, context)).map((statement) => `${indentString}${statement};`).join("\n");
+    return code.map((line) => JavascriptGenerator.processStatement(line, indent, context, parent)).map((statement) => `${indentString}${statement};`).join("\n");
   }
 
-  static processStatement(statement, indent, context) {
+  static processStatement(statement, indent, context, parent = PARENT.NONE) {
     if (statement.type === STRUCTURE_TYPE.ASSIGNMENT) {
       const left = JavascriptGenerator.processStatement(statement.left, indent, context);
       const right = JavascriptGenerator.processStatement(statement.right, indent, context);
@@ -59,7 +65,8 @@ class JavascriptGenerator extends Generator {
       return `"${statement.value}\"`;
     } else if (statement.type === STRUCTURE_TYPE.FUNCTION_CALL) {
       const argStrings = statement.arguments.map(JavascriptGenerator.processStatement, indent, context).join(",");
-      return `${statement.name}(${argStrings})`;
+      const name = JavascriptGenerator.processStatement(statement.name, 0, context);
+      return `${name}(${argStrings})`;
     } else if (statement.type === STRUCTURE_TYPE.COMPARISON) {
       const left = JavascriptGenerator.processStatement(statement.left, indent, context);
       const right = JavascriptGenerator.processStatement(statement.right, indent, context);
@@ -107,19 +114,20 @@ class JavascriptGenerator extends Generator {
 
       return allChildCode;
     } else if (statement.type === STRUCTURE_TYPE.FUNCTION) {
+      const prefix = parent === PARENT.CLASS ? 'static async ' : 'async function ';
       const paramList = statement.parameters.map(JavascriptGenerator.processStatement).join(", ");
       const childCode = JavascriptGenerator.processStatements(statement.children, indent + 1, structuredClone(context));
       if (statement.name) {
-        return `function ${statement.name}(${paramList}) {\n${childCode}\n}`;
+        return `${prefix}${statement.name}(${paramList}) {\n${childCode}\n}`;
       }
-      return `function(${paramList}) {\n${childCode}\n}`;
+      return `${prefix}(${paramList}) {\n${childCode}\n}`;
     } else if (statement.type === STRUCTURE_TYPE.RETURN) {
       if (statement.children.length === 0) {
         return `return`;
       }
       return `return ${JavascriptGenerator.processStatement(statement.children[0], indent, context)}`
     } else if (statement.type === STRUCTURE_TYPE.BLOCK) {
-      return `{\n${JavascriptGenerator.processStatements(statement.children, indent + 1, structuredClone(context))}\n}`;
+      return JavascriptGenerator.processStatements(statement.children, indent + 1, structuredClone(context), parent);
     } else if (statement.type === STRUCTURE_TYPE.LOOP) {
       const childContext = structuredClone(context);
       const preCode = statement.pre ? JavascriptGenerator.processStatement(statement.pre, indent, childContext) : '';
@@ -165,7 +173,9 @@ class JavascriptGenerator extends Generator {
 
       return `${left}.${statement.path.join(".")}`;
     } else if (statement.type === STRUCTURE_TYPE.CLASS) {
-      return `class ${statement.name} {\n${JavascriptGenerator.processStatements(statement.children, indent+1, context)}`;
+      return `class ${statement.name} {\n${JavascriptGenerator.processStatements(statement.children, indent+1, context, PARENT.CLASS)}\n}`;
+    } else if (statement.type === STRUCTURE_TYPE.COMMENT) {
+      return `// ${statement.comment}`;
     } else {
       console.log(statement);
       throw new Error(`Unexpected structure type ${statement.type}`);

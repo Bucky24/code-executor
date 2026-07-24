@@ -587,3 +587,11 @@ Provides a way to declare classes (only static classes are currently supported)
 | -- | -- |
 | name | The name of the class |
 | children | Should be a BLOCK containing function definitions |
+
+### COMMENT
+
+Provides a way to add comments. Note that comments are ignored completely by the `Executor`
+
+| property | description |
+| -- | -- |
+| comment | The text of the comment |

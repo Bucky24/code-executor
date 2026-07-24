@@ -502,8 +502,8 @@ describe('Executor', () => {
             it('should be able to call a function that is defined after the call site', async () => {
                 const code = [
                     assign('myvar', number(2)),
-                    callFunction('foo', [number(1)]),
-                    createFunction(variable('foo'), [variable('arg')], [assign('myvar', variable('arg'))]),
+                    callFunction(variable('foo'), [number(1)]),
+                    createFunction('foo', [variable('arg')], [assign('myvar', variable('arg'))]),
                 ];
                 const executor = new Executor(code);
     
@@ -738,7 +738,7 @@ describe('Executor', () => {
         });
 
         describe('classes', () => {
-            it.only('should allow calling a function on a class', async () => {
+            it('should allow calling a function on a class', async () => {
                 const code = [
                     assign('myVar', number(3)),
                     cls('foo', [{ type: STRUCTURE_TYPE.BLOCK, children: [{ type: STRUCTURE_TYPE.FUNCTION, parameters: [], name: 'bar', children: [assign('myVar', number(4))] }]}]),
@@ -752,6 +752,21 @@ describe('Executor', () => {
                 expect(executor.getTopLevelContext().variables.myVar).toEqual({ type: VALUE_TYPE.NUMBER, value: 4});
             });
         });
+
+        describe('comments', () => {
+            it('should ignore a comment completely', async () => {
+                const code = [
+                    { type: STRUCTURE_TYPE.COMMENT, comment: 'assign' },
+                    assign('myVar', number(3)),
+                ];
+
+                const executor = new Executor(code);
+
+                await executor.execute();
+
+                expect(executor.getTopLevelContext().variables.myVar).toEqual({ type: VALUE_TYPE.NUMBER, value: 3});
+            });
+        })
     });
 
     describe('getValueFor', () => {
