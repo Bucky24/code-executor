@@ -2,7 +2,187 @@
 
 This is designed to be a somewhat lightweight way of processing, executing, and transpiling programming languages
 
-## Exports
+# Usage
+
+The primary way to use this class is as follows:
+
+1) Use `StateManager` to generate an AST from your code.
+2) Use `Executor` to run the AST OR
+3) Use `generator` to transpile
+
+## Using StateManager to generate an AST
+
+The `StateManager` has two pieces that work together to provide an AST that the rest of the system can work with.
+
+1) Building the intermediate parse tree. The `StateManager` handles walking the list of tokens, and managing the state machine. Your job is to provide a list of valid states, and the code to transition from one to the other when handling a token in that state.
+2) From the intermediate parse tree, the `StateManager` walks down the tree, converting to the standard AST that the rest of the system expects. Your job is to provide a function to do this conversion.
+
+Nothing is stopping you from outputting the valid AST in step 1, but it can be convenient to use your own format until the very end.
+
+### Setting Up StateManager
+
+The first step is to create a new instance of the `StateManager`
+
+```
+const manager = new StateManager();
+```
+
+The next step is to initialize a language. A single `StateManager` instance can hold multiple languages. This is often necessary for transpiling.
+
+```
+
+const languageName = 'sample';
+
+const stateMap = {
+  'START': StartClass,
+  'FOR_LOOP': ForLoopClass,
+  'BLOCK': BlockClass,
+};
+
+const startingState = 'START';
+
+const interestingTokensList = [' ', '\n', '(', ')'];
+
+manager.registerLanguage(
+  languageName,
+  stateMap,
+  startingState,
+  interestingTokensList, 
+);
+```
+
+A few of these need some explaination. The `stateMap` is a map from a specific state to a class that handles that state. We'll talk more about what that class looks like later. The `interestingTokensList` tells the tokenizer when to split. So the code `for (foo)` becomes `['for', ' ', '(', 'foo', ')']`. This is important so that the code is tokenized correctly.
+
+### State Classes
+
+Each state requires a corresponding class.
+
+```
+class StartClass {
+  static processToken(token, context, manager) {
+    // process the token
+  }
+
+  static processInternal(statement, manager) {
+    // turn our internal AST into official AST
+  }
+}
+```
+
+Note that `processToken` is always required. It takes in the `token`, which is a string, the `context`, which is the current data object the manager is keeping for this state, and the `manager`, which is a reference to the current instance of the `StateManager`. This method should return a truthy value if the token was processed, and a falsey value if not. Returning a falsey value tells the `StateManager` that the token could not be processed and will cause an error to be thrown (since the assumption is that the code is invalid at this point).
+
+The method `processInternal` is not required for every state, just the ones that get emitted into the intermediate AST and will need conversion to the internal AST. For example, the START state probably does not require `processInternal`.
+
+### Example
+
+A simple example using the grammer we have above:
+
+```
+class StartClass {
+  static processToken(token, context, manager) {
+    if (token === 'for') {
+      manager.setState('FOR_LOOP');
+      return true;
+    } else if (token === '{') {
+      manager.setState('BLOCK');
+      return true;
+    }
+  }
+}
+
+class ForLoopClass {
+  static processToken(token, context, manager) {
+    if (token === ' ') {
+      return true;
+    }
+
+    if (!context.startedParams) {
+      if (token === '(') {
+        manager.setData({
+          startedParams: true,
+        });
+        return true;
+      }
+    } else {
+      if (token === ')') {
+        manager.setData({
+          finishedParams: true,
+        });
+        return true;
+      }
+    }
+
+    if (context.finishedParams && token === '{') {
+      manager.push(true);
+      return true;
+    }
+  }
+}
+
+class BlockClass {
+  static processToken(token, context, manager) {
+    if (token === ' ') {
+      return true;
+    }
+
+    if (token === '}') {
+      manager.pop();
+      return true;
+    }
+  }
+}
+```
+
+Let's break down this example.
+
+1) The StartClass handles two entries. Upon finding either one, it shifts the `state`. This changes the current context so that it is now pointing somewhere else. Generally you would do this if you've found a token that lets you move to a more specific `state`. For example, shifting from "START" to "FOR_LOOP" upon seeing the "for" `token`.
+2) The ForLoopClass ignores spaces, immediately returning true but taking no action. This allows the space to be processed and consumed, without actually having any effect. Then we check the context for a specific flag, `startedParams`. If we don't find it, the only valid token would be an open parhen, in which case we want to update the flag. We use `manager.setData` for this. This method will blend the object passed in with the existing context. We don't actually handle parameters in this example, but as soon as we see the close parhen, we mark a new flag, `finishedParams`. At this point we are ready to see the open curly brace. Here, we call `manager.push`. This adds our current context to the stack and creates a brand new context, with our start state. The `true` parameter is a replay, it tells the system to run over the last token again. This is because the StartClass (which will run next on the new context) will need to know the open curly brace in order to know where to go.
+3) The BlockClass also ignores spaces, and just listens for the close curly brace. Upon finding it, it calls `manger.pop`. This will find the last context in the stack (our for loop) and move that back to the current context. Our block context will automatically be added to the `children` array in the parent context. If there is no context, popping adds the context to the top level statements list.
+
+This language is very limited but hopefully you can see how you would extend it.
+
+### Using StateManager to generate the internal AST
+
+Once the last token has been processed, the `StateManager` will begin to walk the list of top level statements, calling `processInternal`.
+
+```
+class StartClass {
+  static processToken(token, context, manager) {...}
+}
+
+class ForLoopClass {
+  static processToken(token, context, manager) {...}
+
+  static processInternal(statement, manager) {
+    return {
+      type: STRUCTURE_TYPE.LOOP,
+      pre: null,
+      condition: null,
+      post: null,
+      children: statement.children.map(manager.processInternalStatement),
+    };
+  }
+}
+
+class BlockClass {
+  static processToken(token, context, manager) {...}
+
+  static processInternal(statement, manager) {
+    return {
+      type: STRUCTURE_TYPE.BLOCk,
+      children: statement.children.map(manager.processInternalStatement),
+    };
+  }
+}
+```
+
+Notice here that the return value here must be a valid [Statement](#statement). You can see the format for each type below.
+
+The `statement` here is the context that was built by `processToken`, and `manager`, again, is the `StateManager`.
+
+A useful method here is `processInternalStatement`, which you can see here being used on the children of the block and the loop. This allows recursive walking of the intermediate AST.
+
+# Exports
 
 ### Executor
 
@@ -121,12 +301,7 @@ The `StateManager` can provide assistance with generating your parse tree. It is
 
 #### Creation
 
-Create the state manager via the `constructor`, which takes in the following parameters:
-
-| Param | Description |
-| -- | -- |
-| stateMap |  |
-| initialState | The initial state to start the manager from |
+Create the state manager via the `constructor`, which takes no arguments.
 
 Next, initialize a language via the `registerLanguage` method:
 
@@ -318,7 +493,7 @@ Defines a block of re-usable code that can be called as desired. Function defini
 
 | property | description |
 | -- | -- |
-| name | The name of the function |
+| name | The name of the function. Expects a `Variable` or `Path` |
 | parameters | A list of `Statements` that provide the parameter names. Expected to be of type `VARIABLE` |
 | children | A list of `Statements` that provides the code that makes up the function.
 
@@ -403,3 +578,12 @@ Provides a way to exit a function at a specific point, returning an optional val
 | property | description |
 | -- | -- |
 | children | Only the first child is used, should execute to a value |
+
+### CLASS
+
+Provides a way to declare classes (only static classes are currently supported)
+
+| property | description |
+| -- | -- |
+| name | The name of the class |
+| children | Should be a BLOCK containing function definitions |

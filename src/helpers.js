@@ -64,6 +64,13 @@ const helpers = {
             children: child ? [child] : [],
         };
     },
+    cls: (name, children) => {
+        return {
+            type: STRUCTURE_TYPE.CLASS,
+            name,
+            children,
+        };
+    },
 };
 
 module.exports = helpers;

@@ -89,7 +89,7 @@ class Executor {
                     context.variables[left.value] = value;
                 }
             } else {
-                throw new Error(`Invalid left hand of assignment: ${left.type}`);
+                throw new Ecrror(`Invalid left hand of assignment: ${left.type}`);
             }
             return;
         } else if (node.type === STRUCTURE_TYPE.VARIABLE) {
@@ -108,15 +108,22 @@ class Executor {
                 value: node.value,
             };
         } else if (node.type === STRUCTURE_TYPE.FUNCTION_CALL) {
-            const functionName = node.name;
+            let funcData = await this.executeNode(node.name, context);
+            let name;
+            if (funcData.type === VALUE_TYPE.VARIABLE) {
+                name = funcData.value;
+                funcData = this.findInContext(context, funcData.value);
+            } else {
+                name = node.name.left.name + "." + node.name.path.join(".")
+            }
+
+            if (funcData.type !== VALUE_TYPE.FUNCTION) {
+                throw new Error(`${name} is not a function`);
+            }
+
             const functionArguments = [];
             for (const arg of node.arguments) {
                 functionArguments.push(await this.executeNode(arg, context));
-            }
-
-            let funcData = this.findInContext(context, functionName);
-            if (funcData.type !== VALUE_TYPE.FUNCTION) {
-                throw new Error(`${functionName} is not a function`);
             }
             let result = null;
             if (funcData.rawFn) {
@@ -247,7 +254,6 @@ class Executor {
                 ...funcData,
                 name: functionName,
             };
-            
         } else if (node.type === STRUCTURE_TYPE.BLOCK) {
             const childContext = {
                 parent: context,
@@ -344,6 +350,12 @@ class Executor {
                     } else {
                         throw new Error(`Invalid path: ${key}`);
                     }
+                } else if (current.type === VALUE_TYPE.CLASS) {
+                    if (current.functions[key]) {
+                        current = current.functions[key];
+                    } else {
+                        throw new Error(`Invalid path: ${key}`);
+                    }
                 } else {
                     throw new Error(`Path on unknown value type: ${current.type}`);
                 }
@@ -361,6 +373,34 @@ class Executor {
                 type: VALUE_TYPE.RETURN_VALUE,
                 value: value,
             };l
+        } else if (node.type === STRUCTURE_TYPE.CLASS) {
+            const className = node.name;
+
+            const data = {
+                type: VALUE_TYPE.CLASS,
+                context,
+                functions: {},
+            };
+
+            // find all our functions
+            const process = (children) => {
+                for (const child of children) {
+                    if (child.type === STRUCTURE_TYPE.FUNCTION) {
+                        data.functions[child.name] = child;
+                    } else if (child.type === STRUCTURE_TYPE.BLOCK) {
+                        process(child.children);
+                    } else {
+                        throw new Error(`Unexpected node type in class: ${child.type}`);
+                    }
+                }
+            }
+
+            process(node.children);
+
+            context.variables[className] = {
+                ...data,
+                name: className,
+            };
         } else {
             throw new Error(`Unknown node type: ${node.type}`);
         }

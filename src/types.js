@@ -15,6 +15,7 @@ const STRUCTURE_TYPE = {
     PATH: "path",
     NOOP: "noop",
     RETURN: "return",
+    CLASS: "class",
 };
 
 const COMPARISON_OPERATOR = {
@@ -35,6 +36,7 @@ const VALUE_TYPE = {
     VARIABLE: "variable",
     OBJECT: "object",
     RETURN_VALUE: "return_value",
+    CLASS: "class",
 };
 
 const MATH_OPERATOR = {

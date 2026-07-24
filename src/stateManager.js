@@ -9,6 +9,9 @@ class StateManager {
         this.rewindFlag = false;
         this.childKey = null;
         this.currentLanguage = null;
+        this.scheduledPop = false;
+
+        this.processInternalStatement = this.processInternalStatement.bind(this);
     }
 
     registerLanguage(language, states, generators, initialState, splitTokens) {
@@ -37,6 +40,15 @@ class StateManager {
     }
 
     pop(rewind = false) {
+        this.scheduledPop = {
+            rewind,
+        };
+    }
+
+    doPop() {
+        if (!this.scheduledPop) return;
+        const { rewind } = this.scheduledPop;
+        this.scheduledPop = false;
         const language = this.getCurrentLanguage();
         const contextAsStatement = {
             state: this.context.state,
@@ -71,10 +83,12 @@ class StateManager {
 
     popAll() {
         while (this.stack.length > 0) {
-            this.pop();
+            this.scheduledPop = true;
+            this.doPop();
         }
         // pop anything left over that's not in the stack
-        this.pop();
+        this.scheduledPop = true;
+        this.doPop();
     }
 
     push(rewind = false, childKey = null) {
@@ -168,6 +182,9 @@ class StateManager {
         if (!result) {
             throw new Error(`Unxpected token "${token}" at state ${this.context.state}/${this.currentLanguage}`);
         }
+
+        // handle any pop operation that might have happened
+        this.doPop();
 
         if (this.rewindFlag) {
             // replay this token
