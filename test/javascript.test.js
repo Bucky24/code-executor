@@ -1,6 +1,6 @@
 
 const { generate, LANG } = require("../src/generate");
-const { number, callFunction, conditional, comparison, variable, createFunction, assign, math, returnFn } = require("../src/helpers");
+const { number, callFunction, conditional, comparison, variable, createFunction, assign, math, returnFn, cls } = require("../src/helpers");
 const { STRUCTURE_TYPE, VALUE_TYPE, COMPARISON_OPERATOR, MATH_OPERATOR } = require("../src/types");
 const { vol } = require("memfs");
 
@@ -18,7 +18,6 @@ describe('JavaScript Generation', () => {
   describe('generate', () => {
     it('should assign a variable', async () => {
       const code = { type: STRUCTURE_TYPE.ASSIGNMENT, left: { type: STRUCTURE_TYPE.VARIABLE, name: 'foo' }, right: number(1) };
-      
       await generate(LANG.JAVASCRIPT, code, {}, 'path');
       
       const codeString = getCode();
@@ -50,7 +49,7 @@ describe('JavaScript Generation', () => {
     });
     
     it('should call a global context function', async () => {
-      const code = { type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [] };
+      const code = { type: STRUCTURE_TYPE.FUNCTION_CALL, name: variable('foo'), arguments: [] };
       const context = { foo: () => {
         console.log("called");
       }};
@@ -64,7 +63,7 @@ describe('JavaScript Generation', () => {
 
     
     it('should pass arguments to the function', async () => {
-      const code = { type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [ number(1) ] };
+      const code = { type: STRUCTURE_TYPE.FUNCTION_CALL, name: variable('foo'), arguments: [ number(1) ] };
       let args = null;
       let calledContext = null;
       const context = { foo: (arg, context) => {
@@ -79,7 +78,7 @@ describe('JavaScript Generation', () => {
     });
     
     it('should handle return value of raw function', async() => {
-      const code = assign('blar', callFunction('foo', []));
+      const code = assign('blar', callFunction(variable('foo'), []));
       let calledContext = null;
       const context = { foo: (arg, context) => {
         return {
@@ -173,7 +172,7 @@ describe('JavaScript Generation', () => {
     
     it('should show a conditional', async () => {
       const code =[
-        { type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(1), operator: COMPARISON_OPERATOR.EQUAL }, children: [{ type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [] }] },
+        { type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(1), operator: COMPARISON_OPERATOR.EQUAL }, children: [{ type: STRUCTURE_TYPE.FUNCTION_CALL, name: variable('foo'), arguments: [] }] },
       ];
 
       await generate(LANG.JAVASCRIPT, code, {}, 'path');
@@ -189,8 +188,8 @@ describe('JavaScript Generation', () => {
           {
             type: STRUCTURE_TYPE.CONDITIONAL_GROUP,
             children: [
-              conditional(comparison(number(1), number(1), COMPARISON_OPERATOR.EQUAL), [callFunction('foo', [])]),
-              conditional(comparison(number(2), number(1), COMPARISON_OPERATOR.EQUAL), [callFunction('bar', [])]),
+              conditional(comparison(number(1), number(1), COMPARISON_OPERATOR.EQUAL), [callFunction(variable('foo'), [])]),
+              conditional(comparison(number(2), number(1), COMPARISON_OPERATOR.EQUAL), [callFunction(variable('bar'), [])]),
             ],
           },
         ];
@@ -207,9 +206,9 @@ describe('JavaScript Generation', () => {
           {
             type: STRUCTURE_TYPE.CONDITIONAL_GROUP,
             children: [
-              conditional(comparison(number(1), number(1), COMPARISON_OPERATOR.EQUAL), [callFunction('foo', [])]),
+              conditional(comparison(number(1), number(1), COMPARISON_OPERATOR.EQUAL), [callFunction(variable('foo'), [])]),
             ],
-            finally: callFunction('bar', []),
+            finally: callFunction(variable('bar'), []),
           },
         ];
 
@@ -228,7 +227,7 @@ describe('JavaScript Generation', () => {
       
       const codeString = getCode();
         
-      expect(codeString).toBe('let foo = function() {\n\n};');
+      expect(codeString).toBe('let foo = async function () {\n\n};');
     });
     
     it('should be able to create a function', async () => {
@@ -238,7 +237,7 @@ describe('JavaScript Generation', () => {
     
       const codeString = getCode();
       
-      expect(codeString).toBe('function foo() {\n\n};');
+      expect(codeString).toBe('async function foo() {\n\n};');
     });
 
     it('should create a function with paramters', async () => {
@@ -248,7 +247,7 @@ describe('JavaScript Generation', () => {
     
       const codeString = getCode();
       
-      expect(codeString).toBe('function foo(foo, bar) {\n\n};');
+      expect(codeString).toBe('async function foo(foo, bar) {\n\n};');
     });
 
     it('should handle a function with a body', async () => {
@@ -258,21 +257,21 @@ describe('JavaScript Generation', () => {
     
       const codeString = getCode();
       
-      expect(codeString).toBe('function foo() {\n\tlet foo = 1;\n};');
+      expect(codeString).toBe('async function foo() {\n\tlet foo = 1;\n};');
     });
 
     it('should handle the return value of an internal function', async () => {
       const code = [
         assign('myvar', number(2)),
         createFunction('foo', [], [returnFn(number(3))]),
-        assign('myvar', callFunction('foo', [])),
+        assign('myvar', callFunction(variable('foo'), [])),
       ];
 
       await generate(LANG.JAVASCRIPT, code, {}, 'path');
     
       const codeString = getCode();
       
-      expect(codeString).toBe('let myvar = 2;\nfunction foo() {\n\treturn 3;\n};\nmyvar = foo();');
+      expect(codeString).toBe('let myvar = 2;\nasync function foo() {\n\treturn 3;\n};\nmyvar = foo();');
     });
     
     describe('block', () => {
@@ -286,7 +285,7 @@ describe('JavaScript Generation', () => {
       
         const codeString = getCode();
         
-        expect(codeString).toBe('let myvar = 2;\n{\n\tmyvar = 3;\n};');
+        expect(codeString).toBe('let myvar = 2;\n\tmyvar = 3;;');
       });
     });
     
@@ -432,6 +431,34 @@ describe('JavaScript Generation', () => {
         const codeString = getCode();
       
         expect(codeString).toBe('let myvar = {\n\tfoo: {\n\t\tbar: 2,\n\t},\n};\nmyvar.foo.bar;');
+      });
+    });
+
+    describe('classes', () => {
+      it('should generate a class', async () => {
+        const code = [
+          cls('foo', [createFunction('bar', [], [])])
+        ];
+
+        await generate(LANG.JAVASCRIPT, code, {}, 'path');
+    
+        const codeString = getCode();
+      
+        expect(codeString).toBe('class foo {\n\tstatic async bar() {\n\n};\n};');
+      });
+    });
+
+    describe('raw', () => {
+      it('should handle raw code', async () => {
+        const code = [
+          { type: STRUCTURE_TYPE.RAW, code: 'foo' }
+        ];
+
+        await generate(LANG.JAVASCRIPT, code, {}, 'path');
+    
+        const codeString = getCode();
+      
+        expect(codeString).toBe('foo;');
       });
     });
   });

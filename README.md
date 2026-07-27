@@ -153,13 +153,17 @@ class StartClass {
 class ForLoopClass {
   static processToken(token, context, manager) {...}
 
-  static processInternal(statement, manager) {
+  static async processInternal(statement, manager) {
+    const children = [];
+    for (const child of statement.children) {
+      children.push(await manager.processInternalStatement(child));
+    }
     return {
       type: STRUCTURE_TYPE.LOOP,
       pre: null,
       condition: null,
       post: null,
-      children: statement.children.map(manager.processInternalStatement),
+      children,
     };
   }
 }
@@ -167,10 +171,14 @@ class ForLoopClass {
 class BlockClass {
   static processToken(token, context, manager) {...}
 
-  static processInternal(statement, manager) {
+  static async processInternal(statement, manager) {
+    const children = [];
+    for (const child of statement.children) {
+      children.push(await manager.processInternalStatement(child));
+    }
     return {
       type: STRUCTURE_TYPE.BLOCk,
-      children: statement.children.map(manager.processInternalStatement),
+      children,
     };
   }
 }
@@ -180,7 +188,7 @@ Notice here that the return value here must be a valid [Statement](#statement). 
 
 The `statement` here is the context that was built by `processToken`, and `manager`, again, is the `StateManager`.
 
-A useful method here is `processInternalStatement`, which you can see here being used on the children of the block and the loop. This allows recursive walking of the intermediate AST.
+A useful method here is `processInternalStatement`, which you can see here being used on the children of the block and the loop. This allows recursive walking of the intermediate AST. Note that `processInternal` does not need to return a `Promise`, but it can if you need it to.
 
 # Exports
 
@@ -321,7 +329,7 @@ Code parsing is done first by setting the active language via `setCurrentLanguag
 | -- | -- |
 | language | The language to set as the current |
 
-Then the method `processCode` should be called.
+Then the method `processCode` should be called (this method returns a `Promise`).
 
 | Param | Description |
 | -- | -- |
@@ -348,7 +356,7 @@ This method should return true if the token has been processed correctly. Else a
 | statement | The internal statement |
 | manager | The current instance of the `StateManager` |
 
-This method should return a valid `Statement`. You can call the `processInternalStatement` method with any child statements.
+This method should return a valid `Statement`. You can call the `processInternalStatement` method with any child statements (returns a `Promise`).
 
 The following methods can be used by `processToken` to ensure the context is updated.
 
@@ -595,3 +603,11 @@ Provides a way to add comments. Note that comments are ignored completely by the
 | property | description |
 | -- | -- |
 | comment | The text of the comment |
+
+### RAW
+
+Provides a way to inject raw code into the system. Note that the `Executor` will throw if it encounters a RAW block, these are intended for `generator` only.
+
+| property | description |
+| -- | -- |
+| code | The raw code to inject |

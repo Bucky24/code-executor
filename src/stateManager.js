@@ -193,14 +193,14 @@ class StateManager {
         }
     }
 
-    processInternalStatement(statement) {
+    async processInternalStatement(statement) {
         const func = this.getClassMethod(statement.state, 'processInternal');
-        const result = func(statement, this);
+        const result = await func(statement, this);
 
         return result;
     }
 
-    processCode(code, debug = false) {
+    async processCode(code, debug = false) {
         const language = this.getCurrentLanguage();
         const tokens = Tokenize(code, language.splitTokens);
         this.newContext();
@@ -214,7 +214,7 @@ class StateManager {
 
         // now go through statements and convert them 
         for (const statement of this.getInternalStatements()) {
-            this.statements.push(this.processInternalStatement(statement));
+            this.statements.push(await this.processInternalStatement(statement));
         }
     }
 

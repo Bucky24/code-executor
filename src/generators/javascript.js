@@ -176,6 +176,8 @@ class JavascriptGenerator extends Generator {
       return `class ${statement.name} {\n${JavascriptGenerator.processStatements(statement.children, indent+1, context, PARENT.CLASS)}\n}`;
     } else if (statement.type === STRUCTURE_TYPE.COMMENT) {
       return `// ${statement.comment}`;
+    } else if (statement.type === STRUCTURE_TYPE.RAW) {
+      return statement.code;
     } else {
       console.log(statement);
       throw new Error(`Unexpected structure type ${statement.type}`);

@@ -149,5 +149,11 @@ describe('validator', () => {
             
             expect(() => validate({ type: STRUCTURE_TYPE.COMMENT })).toThrow("top: Missing the following properties: comment");
         });
+
+        it('should validate raw', () => {
+            expect(() => validate({ type: STRUCTURE_TYPE.RAW, code: 'foo' })).not.toThrow();
+            
+            expect(() => validate({ type: STRUCTURE_TYPE.RAW })).toThrow("top: Missing the following properties: code");
+        });
     });
 });

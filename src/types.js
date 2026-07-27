@@ -17,6 +17,7 @@ const STRUCTURE_TYPE = {
     RETURN: "return",
     CLASS: "class",
     COMMENT: "comment",
+    RAW: "raw",
 };
 
 const COMPARISON_OPERATOR = {

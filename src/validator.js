@@ -91,6 +91,8 @@ function validate(structure, path = ['top']) {
             validate(structure.children, [...path, 'children']);
         } else if (structure.type === STRUCTURE_TYPE.COMMENT) {
             checkForKeys(structure, ['comment']);
+        } else if (structure.type === STRUCTURE_TYPE.RAW) {
+            checkForKeys(structure, ['code']);
         } else {
             throw new Error(`Unknown structure type: ${structure.type}`);
         }

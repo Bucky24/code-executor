@@ -766,7 +766,19 @@ describe('Executor', () => {
 
                 expect(executor.getTopLevelContext().variables.myVar).toEqual({ type: VALUE_TYPE.NUMBER, value: 3});
             });
-        })
+        });
+
+        describe('raw', () => {
+            it('should throw an error if given raw', async () => {
+                const code = [
+                    { type: STRUCTURE_TYPE.RAW, code: 'foo' },
+                ];
+
+                const executor = new Executor(code);
+
+                await expect(() => executor.execute()).rejects.toThrow('Executor cannot handle RAW nodes');
+            });
+        });
     });
 
     describe('getValueFor', () => {

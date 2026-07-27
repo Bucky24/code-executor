@@ -3,7 +3,7 @@ const { STRUCTURE_TYPE } = require("../src/types");
 
 describe('StateManager', () => {
   describe('processCode', () => {
-    it('should correctly call the default state', () => {
+    it('should correctly call the default state', async () => {
       class Start {
         static processToken(token, context, manager) {
           manager.setState('stub', {
@@ -27,7 +27,7 @@ describe('StateManager', () => {
       }, {}, 'start', []);
 
       manager.setCurrentLanguage('lang');
-      manager.processCode(' ');
+      await manager.processCode(' ');
       const statements = manager.getStatements();
 
       expect(statements[0]).toStrictEqual({
@@ -36,7 +36,7 @@ describe('StateManager', () => {
       });
     });
 
-    it('should error if current state does not handle token', () => {
+    it('should error if current state does not handle token', async () => {
       class Start {
         static processToken(token, context, manager) {
           // nothing
@@ -48,10 +48,10 @@ describe('StateManager', () => {
       }, {}, 'start', []);
       manager.setCurrentLanguage('lang');
 
-      expect(() => manager.processCode(' ')).toThrow('Unxpected token " " at state start');
+      await expect(() => manager.processCode(' ')).rejects.toThrow('Unxpected token " " at state start/lang');
     });
 
-    it('should fail if function is provided', () => {
+    it('should fail if function is provided', async () => {
       class Start {
         static processToken(token, context, manager) {
           manager.setState('stub', {
@@ -68,12 +68,12 @@ describe('StateManager', () => {
       }, {}, 'start', []);
       manager.setCurrentLanguage('lang');
 
-      expect(() => manager.processCode(' ')).toThrow('State stub/lang does not map to a class');
+      await expect(() => manager.processCode(' ')).rejects.toThrow('State stub/lang does not map to a class');
     });
   });
 
   describe('generate', () => {
-    it('should provide expected output', () => {
+    it('should provide expected output', async () => {
       class Start {
         static processToken(token, context, manager) {
           manager.setState('stub', {
@@ -108,13 +108,13 @@ describe('StateManager', () => {
       }, 'start', []);
 
       manager.setCurrentLanguage('lang');
-      manager.processCode('a');
+      await manager.processCode('a');
 
       const result = manager.generate();
       expect(result[0]).toBe('stub_a');
     });
 
-    it('should handle any nesting', () => {
+    it('should handle any nesting', async () => {
       class Start {
         static processToken(token, context, manager) {
           manager.setState('stuba', {
@@ -157,7 +157,7 @@ describe('StateManager', () => {
       }, 'start', []);
 
       manager.setCurrentLanguage('lang');
-      manager.processCode('a');
+      await manager.processCode('a');
 
       const result = manager.generate();
       expect(result[0]).toBe('stub_a');

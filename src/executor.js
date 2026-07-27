@@ -403,6 +403,8 @@ class Executor {
             };
         } else if (node.type === STRUCTURE_TYPE.COMMENT) {
             // no-op
+        } else if (node.type === STRUCTURE_TYPE.RAW) {
+            throw new Error(`Executor cannot handle RAW nodes`);
         } else {
             throw new Error(`Unknown node type: ${node.type}`);
         }
