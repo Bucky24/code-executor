@@ -34,6 +34,7 @@ function validate(structure, path = ['top']) {
         } else if (structure.type === STRUCTURE_TYPE.FUNCTION_CALL) {
             checkForKeys(structure, ['name', 'arguments']);
             validate(structure.arguments, [...path, 'arguments']);
+            validate(structure.name, [...path, 'name']);
         } else if (structure.type === STRUCTURE_TYPE.COMPARISON) {
             checkForKeys(structure, ['left', 'right', 'operator']);
             validate(structure.left, [...path, 'left']);
@@ -93,6 +94,13 @@ function validate(structure, path = ['top']) {
             checkForKeys(structure, ['comment']);
         } else if (structure.type === STRUCTURE_TYPE.RAW) {
             checkForKeys(structure, ['code']);
+        } else if (structure.type === STRUCTURE_TYPE.LIST) {
+            checkForKeys(structure, ['children']);
+            validate(structure.children, [...path, 'children']);
+        } else if (structure.type === STRUCTURE_TYPE.LIST_ACCESS) {
+            checkForKeys(structure, ['index', 'left']);
+            validate(structure.index, [...path, 'index']);
+            validate(structure.left, [...path, 'left']);
         } else {
             throw new Error(`Unknown structure type: ${structure.type}`);
         }

@@ -33,11 +33,13 @@ describe('validator', () => {
         });
 
         it('should validate function calls', () => {
-            expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [{ type: STRUCTURE_TYPE.NUMBER, value: 1 }] })).not.toThrow();
+            expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION_CALL, name: { type: STRUCTURE_TYPE.VARIABLE, name: 'foo' }, arguments: [{ type: STRUCTURE_TYPE.NUMBER, value: 1 }] })).not.toThrow();
 
-            expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo' })).toThrow("top: Missing the following properties: arguments");
+            expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION_CALL, name: { type: STRUCTURE_TYPE.VARIABLE, name: 'foo' } })).toThrow("top: Missing the following properties: arguments");
 
             expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION_CALL })).toThrow("top: Missing the following properties: name, arguments");
+
+            expect(() => validate({ type: STRUCTURE_TYPE.FUNCTION_CALL, name: { type: STRUCTURE_TYPE.VARIABLE}, arguments: [{ type: STRUCTURE_TYPE.NUMBER, value: 1 }] })).toThrow("top.name: Missing the following properties: name");
         });
 
         it('should validate comparisons', () => {
@@ -154,6 +156,24 @@ describe('validator', () => {
             expect(() => validate({ type: STRUCTURE_TYPE.RAW, code: 'foo' })).not.toThrow();
             
             expect(() => validate({ type: STRUCTURE_TYPE.RAW })).toThrow("top: Missing the following properties: code");
+        });
+
+        it('should validate list', () => {
+            expect(() => validate({ type: STRUCTURE_TYPE.LIST, children: [] })).not.toThrow();
+            
+            expect(() => validate({ type: STRUCTURE_TYPE.LIST })).toThrow("top: Missing the following properties: children");
+
+            expect(() => validate({ type: STRUCTURE_TYPE.LIST, children: [{ type: STRUCTURE_TYPE.VARIABLE }] })).toThrow("top.children.variable(0): Missing the following properties: name");
+        });
+
+        it('should validate list access', () => {
+            expect(() => validate({ type: STRUCTURE_TYPE.LIST_ACCESS, index: { type: STRUCTURE_TYPE.VARIABLE, name: 'foo' }, left: variable('foo') })).not.toThrow();
+            
+            expect(() => validate({ type: STRUCTURE_TYPE.LIST_ACCESS })).toThrow("top: Missing the following properties: index, left");
+
+            expect(() => validate({ type: STRUCTURE_TYPE.LIST_ACCESS, index: { type: STRUCTURE_TYPE.VARIABLE }, left: variable('foo') })).toThrow("top.index: Missing the following properties: name");
+
+            expect(() => validate({ type: STRUCTURE_TYPE.LIST_ACCESS, index: { type: STRUCTURE_TYPE.VARIABLE, name: 'foo' }, left: { type: STRUCTURE_TYPE.VARIABLE }, })).toThrow("top.left: Missing the following properties: name");
         });
     });
 });

@@ -611,3 +611,20 @@ Provides a way to inject raw code into the system. Note that the `Executor` will
 | property | description |
 | -- | -- |
 | code | The raw code to inject |
+
+### LIST
+
+Provides a list of items
+
+| property | description |
+| -- | -- |
+| children | List of items in the list |
+
+### LIST_ACCESS
+
+Provides a way to access items at a specific index in a list
+
+| property | description |
+| -- | -- |
+| left | The left side of the access, usually a `VARIABLE` or `PATH` |
+| index | Value that eventually resolves to a numeric index |

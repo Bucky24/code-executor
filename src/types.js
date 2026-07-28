@@ -18,6 +18,8 @@ const STRUCTURE_TYPE = {
     CLASS: "class",
     COMMENT: "comment",
     RAW: "raw",
+    LIST: "list",
+    LIST_ACCESS: "list_access",
 };
 
 const COMPARISON_OPERATOR = {
@@ -39,6 +41,7 @@ const VALUE_TYPE = {
     OBJECT: "object",
     RETURN_VALUE: "return_value",
     CLASS: "class",
+    LIST: "list",
 };
 
 const MATH_OPERATOR = {

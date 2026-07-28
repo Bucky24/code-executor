@@ -405,6 +405,28 @@ class Executor {
             // no-op
         } else if (node.type === STRUCTURE_TYPE.RAW) {
             throw new Error(`Executor cannot handle RAW nodes`);
+        } else if (node.type === STRUCTURE_TYPE.LIST) {
+            return {
+                type: VALUE_TYPE.LIST,
+                items: node.children,
+            };
+        } else if (node.type === STRUCTURE_TYPE.LIST_ACCESS) {
+            let left = await this.executeNode(node.left);
+
+            if (left.type === VALUE_TYPE.VARIABLE) {
+                left = this.findInContext(context, left.value);
+            }
+
+            if (left.type !== VALUE_TYPE.LIST) {
+                throw new Error(`LIST_ACCESS expects a LIST`);
+            }
+
+            const index = await this.executeNode(node.index);
+            if (index.type !== VALUE_TYPE.NUMBER) {
+                throw new Error(`LIST_ACCESS index expects a NUMBER`);
+            }
+
+            return left.items[index.value];
         } else {
             throw new Error(`Unknown node type: ${node.type}`);
         }

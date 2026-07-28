@@ -178,6 +178,10 @@ class JavascriptGenerator extends Generator {
       return `// ${statement.comment}`;
     } else if (statement.type === STRUCTURE_TYPE.RAW) {
       return statement.code;
+    } else if (statement.type === STRUCTURE_TYPE.LIST) {
+      return `[${statement.children.map(item => JavascriptGenerator.processStatement(item, indent + 1, context)).join(", ")}]`;
+    } else if (statement.type === STRUCTURE_TYPE.LIST_ACCESS) {
+      return `${JavascriptGenerator.processStatement(statement.left, indent, context)}[${JavascriptGenerator.processStatement(statement.index)}]`;
     } else {
       console.log(statement);
       throw new Error(`Unexpected structure type ${statement.type}`);

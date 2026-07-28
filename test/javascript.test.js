@@ -461,5 +461,20 @@ describe('JavaScript Generation', () => {
         expect(codeString).toBe('foo;');
       });
     });
+
+    describe('lists', () => {
+      it('should handle a list', async () => {
+        const code = [
+          assign("foo", { type: STRUCTURE_TYPE.LIST, children: [number(0), number(1)]}),
+          assign("bar", { type: STRUCTURE_TYPE.LIST_ACCESS, left: variable("foo"), index: number(0) }),
+        ];
+
+        await generate(LANG.JAVASCRIPT, code, {}, 'path');
+    
+        const codeString = getCode();
+      
+        expect(codeString).toBe('let foo = [0, 1];\nlet bar = foo[0];');
+      });
+    })
   });
 });

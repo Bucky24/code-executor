@@ -279,7 +279,7 @@ describe('Executor', () => {
 
             it('should pass through return value and not execute further children', async () => {
                 const code = [
-                    { type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(1), operator: COMPARISON_OPERATOR.EQUAL }, children: [{ type: STRUCTURE_TYPE.RETURN, children: [number(5)] }, { type: STRUCTURE_TYPE.FUNCTION_CALL, name: 'foo', arguments: [] }] },
+                    { type: STRUCTURE_TYPE.CONDITIONAL, condition: { type: STRUCTURE_TYPE.COMPARISON, left: number(1), right: number(1), operator: COMPARISON_OPERATOR.EQUAL }, children: [{ type: STRUCTURE_TYPE.RETURN, children: [number(5)] }, { type: STRUCTURE_TYPE.FUNCTION_CALL, name: variable('foo'), arguments: [] }] },
                 ]; 
                 let called = false;
                 const context = Executor.createContext({}, { foo: () => {
@@ -779,6 +779,21 @@ describe('Executor', () => {
                 await expect(() => executor.execute()).rejects.toThrow('Executor cannot handle RAW nodes');
             });
         });
+
+        describe('lists', () => {
+            it('should handle a list correctly', async () => {
+                const code = [
+                    assign('foo', { type: STRUCTURE_TYPE.LIST, children: [number(1), number(2)]}),
+                    assign('bar', { type: STRUCTURE_TYPE.LIST_ACCESS, left: variable('foo'), index: number(0) }),
+                ];
+
+                const executor = new Executor(code);
+
+                await executor.execute();
+
+                expect(executor.getTopLevelContext().variables.bar).toEqual({ type: VALUE_TYPE.NUMBER, value: 1});
+            });
+        })
     });
 
     describe('getValueFor', () => {
