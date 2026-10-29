@@ -200,7 +200,7 @@ class StateManager {
         return result;
     }
 
-    async processCode(code, debug = false) {
+    processCodeWithoutTranslate(code, debug = false) {
         const language = this.getCurrentLanguage();
         const tokens = Tokenize(code, language.splitTokens);
         this.newContext();
@@ -211,6 +211,10 @@ class StateManager {
         }
 
         this.popAll();
+    }
+
+    async processCode(code, debug = false) {
+        this.processCodeWithoutTranslate(code, debug);
 
         // now go through statements and convert them 
         for (const statement of this.getInternalStatements()) {

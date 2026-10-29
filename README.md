@@ -330,6 +330,7 @@ Code parsing is done first by setting the active language via `setCurrentLanguag
 | language | The language to set as the current |
 
 Then the method `processCode` should be called (this method returns a `Promise`).
+Or, if you don't want to convert your internal format to the standard format that `Executor` understands, then you can call `processCodeWithoutTranslation`
 
 | Param | Description |
 | -- | -- |
